@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prception — Creative Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400..700&family=Martian+Mono:wght@300..500&family=Inter+Tight:wght@300..600&display=swap" rel="stylesheet" />
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 166 210"><path fill="%231FE6DC" fill-rule="evenodd" d="M 62 61 Q 62 55 66.69 58.75 L 114.19 96.75 Q 122 103 115.44 110.55 L 85.94 144.47 Q 82 149 82 155 L 82 168 Q 82 175 75 175 L 69 175 Q 62 175 62 168 L 62 141 Q 62 135 66.24 130.76 L 89.05 107.95 Q 94 103 88.73 98.39 L 66.52 78.95 Q 62 75 62 69 Z M 74 79 Q 74 75 76.83 77.83 L 98.46 99.46 Q 102 103 98.46 106.54 L 76.83 128.17 Q 74 131 74 127 Z"/></svg>' />
+<style>
+  :root {
+    --bg: #0c0c0c;
+    --bg-2: #0f0f0f;
+    --panel: #131313;
+    --panel-2: #161616;
+    --ink: #d8d8d8;
+    --ink-dim: rgba(216, 216, 216, 0.55);
+    --ink-faint: rgba(216, 216, 216, 0.28);
+    --teal: #1fe6dc;
+    --teal-soft: rgba(31, 230, 220, 0.5);
+    --line: rgba(216, 216, 216, 0.14);
+    --font-grot: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "Martian Mono", "Courier New", monospace;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-inout: cubic-bezier(0.83, 0, 0.17, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Neue Haas Grotesk Display Pro", "Helvetica Neue", "Inter Tight", Inter, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body.locked { overflow: hidden; }
+  ::selection { background: var(--teal); color: var(--bg); }
+  a { color: inherit; text-decoration: none; }
+
+  /* ============================================================
+     PRELOADER
+     ============================================================ */
+  #preloader {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--bg);
+    transition: opacity 0.7s ease;
+  }
+  #preloader.lift { opacity: 0; pointer-events: none; }
+
+  .pre-corner {
+    position: absolute;
+    font-family: var(--font-grot);
+    font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-dim);
+    opacity: 0; animation: fadeIn 0.9s var(--ease-out) 0.3s forwards;
+  }
+  .pre-corner.tl { top: 2rem; left: 2rem; }
+  .pre-corner.tr { top: 2rem; right: 2rem; }
+  .pre-corner.bl { bottom: 2.2rem; left: 2rem; }
+  #preloader.done .pre-corner { animation: fadeOut 0.4s ease forwards; }
+
+  .pre-logo {
+    position: absolute; top: 50%; left: 50%;
+    width: clamp(84px, 11vw, 128px);
+    transform: translate(-50%, -50%);
+    opacity: 0; animation: fadeIn 0.8s var(--ease-out) 0.15s forwards;
+  }
+  #preloader.done .pre-logo { animation: fadeOut 0.55s ease 0.15s both; }
+  .pre-logo svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+  .pre-count {
+    position: absolute; right: 1.6rem; bottom: 0.4rem;
+    font-size: clamp(5.5rem, 14vw, 11rem); font-weight: 600;
+    letter-spacing: -0.04em; line-height: 1;
+    font-variant-numeric: tabular-nums; color: var(--ink);
+    opacity: 0; animation: fadeIn 0.9s var(--ease-out) 0.3s forwards;
+  }
+  .pre-count sup { font-size: 0.28em; font-weight: 500; vertical-align: super; color: var(--ink-dim); }
+  #preloader.done .pre-count { animation: fadeOutDown 0.45s ease forwards; }
+
+  @keyframes fadeIn { to { opacity: 1; } }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes fadeOutDown { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(12px); } }
+
+  /* ============================================================
+     HERO STAGE
+     ============================================================ */
+  .intro { height: 340vh; position: relative; }
+  .stage {
+    position: sticky; top: 0;
+    height: 100svh; min-height: 560px;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 120% 80% at 50% 42%, rgba(31,230,220,0.08), transparent 55%),
+      radial-gradient(ellipse 90% 90% at 50% 120%, rgba(31,230,220,0.05), transparent 60%),
+      var(--bg);
+  }
+
+  /* ---- Header: brand left, pill actions right ---- */
+  .site-header {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.5rem 2.25rem; color: var(--ink);
+  }
+  .brand { display: flex; align-items: center; }
+  .brand-logo { height: 30px; width: auto; display: block; }
+  .nav-actions { display: flex; align-items: center; gap: 0.55rem; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 0.55rem;
+    height: 38px; padding: 0 1.15rem; border-radius: 999px;
+    font-family: var(--font-grot); font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.02em; text-transform: uppercase; cursor: pointer;
+    transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease;
+  }
+  .pill.solid { background: #e8e8e8; color: #111; border: 1px solid #e8e8e8; }
+  .pill.solid:hover { background: var(--teal); border-color: var(--teal); }
+  .pill.ghost { background: transparent; color: var(--ink); border: 1px solid rgba(216,216,216,0.28); }
+  .pill.ghost:hover { border-color: var(--ink); }
+  .pill .bars { display: inline-flex; flex-direction: column; gap: 3px; }
+  .pill .bars i { display: block; width: 14px; height: 1.5px; background: currentColor; }
+
+  /* ---- Fullscreen menu overlay ---- */
+  .menu-overlay {
+    position: fixed; inset: 0; z-index: 90;
+    background: rgba(12, 12, 12, 0.97);
+    display: flex; align-items: center;
+    padding-left: clamp(2.25rem, 10vw, 10rem);
+    visibility: hidden; opacity: 0;
+    transition: opacity 0.5s ease, visibility 0.5s;
+  }
+  .menu-overlay.open { visibility: visible; opacity: 1; }
+  .menu-overlay nav { display: flex; flex-direction: column; gap: 0.4rem; }
+  .menu-overlay nav a {
+    font-size: clamp(2.4rem, 6vw, 4.6rem); font-weight: 400;
+    letter-spacing: -0.02em; color: var(--ink-dim);
+    transition: color 0.3s ease, transform 0.3s var(--ease-out);
+  }
+  .menu-overlay nav a:hover { color: var(--ink); transform: translateX(12px); }
+  .menu-overlay .menu-close { position: absolute; top: 1.5rem; right: 2.25rem; }
+
+  /* ---- Centered 3D logo (fans out of its own slabs) ---- */
+  .sign { position: absolute; inset: 0; z-index: 6; }
+  .sign canvas { display: block; width: 100%; height: 100%; }
+
+  /* ---- Hero UI ---- */
+  .stage-ui { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
+  .stage-ui > * { pointer-events: auto; }
+
+  .hero-center {
+    position: absolute; top: 5.2rem; left: 2.25rem; right: 2.25rem;
+    text-align: left;
+  }
+  .tagline {
+    font-size: clamp(2.1rem, 5.8vw, 5.2rem); font-weight: 400;
+    line-height: 1.0; letter-spacing: -0.025em; color: var(--ink);
+  }
+  .tagline .accent { color: var(--teal); }
+
+  /* bottom-left circular scroll cue */
+  .scroll-orb {
+    position: absolute; left: 2.25rem; bottom: 3rem;
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid rgba(216,216,216,0.28);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-dim); font-size: 1rem;
+    transition: border-color 0.3s ease, color 0.3s ease;
+  }
+  .scroll-orb:hover { border-color: var(--ink); color: var(--ink); }
+
+  /* Staggered reveal */
+  .rv { display: inline-block; overflow: hidden; vertical-align: bottom; }
+  .rv > * { display: inline-block; transform: translateY(120%); }
+  .revealed .rv > * { transition: transform 0.95s var(--ease-inout); transform: translateY(0); }
+
+  /* ---- Scroll beats: overlays that travel UP + cross-fade with scroll ---- */
+  .beats { position: absolute; inset: 0; z-index: 8; pointer-events: none; }
+  .beat {
+    position: absolute; inset: 0;
+    opacity: 0;
+    /* --y is set per-frame by JS: each beat is a full-viewport sheet that
+       physically travels the whole screen height in front of the fixed 3D
+       canvas, like a section scrolling past while the logo moves behind it */
+    transform: translateY(var(--y, 60vh));
+    will-change: opacity, transform;
+  }
+  .beat.on { pointer-events: auto; }
+
+  /* beat 1 — about statement */
+  .edge-label {
+    position: absolute; left: 2.25rem; top: 50%; transform: translateY(-50%);
+    font-family: var(--font-grot); font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink);
+  }
+  .statement {
+    position: absolute; left: clamp(2.25rem, 13vw, 16rem); top: 50%;
+    transform: translateY(-50%); max-width: 1080px;
+    font-size: clamp(2rem, 4.6vw, 4.2rem); font-weight: 400;
+    line-height: 1.12; letter-spacing: -0.02em; color: var(--ink);
+  }
+  .statement .accent { color: var(--teal); }
+
+  /* beat 2 — two columns */
+  .col-caps {
+    position: absolute; left: 2.25rem; top: 6.2rem;
+    font-family: var(--font-grot); font-size: 0.78rem; font-weight: 600;
+    letter-spacing: 0.02em; text-transform: uppercase; line-height: 1.55;
+    color: var(--ink);
+  }
+  .col-mission { position: absolute; right: 2.25rem; top: 6.2rem; width: min(330px, 78vw); }
+  .col-mission p { font-size: 1.02rem; line-height: 1.5; color: var(--ink); }
+  .mono-link {
+    display: inline-block; margin-top: 2.2rem;
+    font-family: var(--font-mono); font-size: 0.72rem; font-weight: 400;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink);
+    border-bottom: 1px solid rgba(216,216,216,0.4); padding-bottom: 0.5rem;
+  }
+  .mono-link:hover { color: var(--teal); border-color: var(--teal-soft); }
+
+  /* beat 3 — giant marquee + outcome line */
+  .marquee {
+    position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+    overflow: hidden; white-space: nowrap;
+  }
+  .marquee-track {
+    display: inline-flex; align-items: center; gap: 3.2rem; padding-right: 3.2rem;
+    animation: marq 22s linear infinite;
+  }
+  .marquee-track span {
+    font-size: clamp(4.2rem, 10vw, 9.4rem); font-weight: 400;
+    letter-spacing: -0.02em; text-transform: uppercase; line-height: 1;
+    color: var(--ink);
+  }
+  .marquee-track i { font-style: normal; font-size: clamp(1.6rem, 3vw, 2.6rem); color: var(--ink-faint); }
+  @keyframes marq { to { transform: translateX(-50%); } }
+  .from-idea {
+    position: absolute; left: 50%; bottom: 3.2rem; transform: translateX(-50%);
+    font-family: var(--font-grot); font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink);
+    white-space: nowrap;
+  }
+
+  /* ============================================================
+     FOCUSED VISION  (pin releases into this)
+     ============================================================ */
+  .focus {
+    position: relative; z-index: 2;
+    min-height: 92svh; display: flex; align-items: center;
+    padding: 8rem 2rem; background: var(--bg-2); color: var(--ink);
+    border-top: 1px solid var(--line);
+  }
+  .focus-inner { max-width: min(92vw, 900px); }
+  .focus-idx {
+    display: block; font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.28em; text-transform: uppercase; color: var(--teal);
+    margin-bottom: 1.4rem;
+  }
+  .focus-h {
+    font-size: clamp(2rem, 6vw, 4.6rem); font-weight: 800;
+    line-height: 1.05; letter-spacing: -0.02em; text-transform: uppercase;
+  }
+  .focus-h .accent { color: var(--teal); }
+  .focus-sub {
+    margin-top: 1.6rem; font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+    color: var(--ink-dim); max-width: 46ch;
+  }
+
+  /* ============================================================
+     WORK
+     ============================================================ */
+  .work {
+    position: relative; z-index: 2;
+    padding: 9rem 2rem 7rem; background: var(--bg-2); color: var(--ink);
+  }
+  .work-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3.5rem; }
+  .work-head h2 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.02em; text-transform: uppercase; }
+  .work-head .idx { font-size: 0.75rem; letter-spacing: 0.2em; color: var(--ink-faint); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; }
+  .tile {
+    aspect-ratio: 4 / 3; border: 1px solid var(--line); border-radius: 4px;
+    position: relative; overflow: hidden;
+    background:
+      radial-gradient(ellipse 90% 90% at 30% 110%, rgba(31,230,220,0.08), transparent 60%),
+      linear-gradient(160deg, #10161b, #0a0e11);
+    transition: border-color 0.4s ease;
+  }
+  .tile:hover { border-color: rgba(31,230,220,0.4); }
+  .tile .label { position: absolute; left: 1.1rem; bottom: 1rem; font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); }
+  .tile .num { position: absolute; right: 1.1rem; top: 0.9rem; font-size: 0.7rem; letter-spacing: 0.15em; color: var(--ink-faint); }
+
+  footer {
+    display: flex; justify-content: space-between; padding: 2rem;
+    font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-faint); background: var(--bg-2); border-top: 1px solid var(--line);
+  }
+
+  @media (max-width: 640px) {
+    .hero-center { top: 5.5rem; left: 1.2rem; right: 1.2rem; }
+    .scroll-orb { left: 1.2rem; bottom: 2rem; }
+    .col-mission { right: auto; left: 2.25rem; top: 14rem; }
+    .statement { left: 1.2rem; right: 1.2rem; }
+    .edge-label { display: none; }
+    .pre-count { right: 1rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rv > * { transform: none !important; transition: none !important; }
+    .intro { height: auto; }
+    .stage { position: relative; }
+  }
+</style>
+</head>
+<body class="locked">
+
+<!-- Reusable mark: exact Prception logo geometry -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="prception-mark">
+      <path d="M 12 31 Q 12 5 37.94 6.73 L 68.08 8.74 Q 102 11 119.59 40.09 L 138.48 71.33 Q 154 97 135.71 120.78 L 102.54 163.9 Q 94 175 82.13 182.42 L 84.78 180.76 Q 78 185 78 193 L 78 197 Q 78 205 70 205 L 38 205 Q 12 205 12 179 Z" fill="var(--mk-body, #eef3f2)"/>
+      <path fill-rule="evenodd" d="M 62 61 Q 62 55 66.69 58.75 L 114.19 96.75 Q 122 103 115.44 110.55 L 85.94 144.47 Q 82 149 82 155 L 82 168 Q 82 175 75 175 L 69 175 Q 62 175 62 168 L 62 141 Q 62 135 66.24 130.76 L 89.05 107.95 Q 94 103 88.73 98.39 L 66.52 78.95 Q 62 75 62 69 Z M 74 79 Q 74 75 76.83 77.83 L 98.46 99.46 Q 102 103 98.46 106.54 L 76.83 128.17 Q 74 131 74 127 Z" fill="var(--mk-chev, #1fe6dc)"/>
+      <path d="M 93.5 169 Q 93.5 164.5 98 164.5 L 118 164.5 Q 122.5 164.5 122.5 169 L 122.5 189 Q 122.5 193.5 118 193.5 L 98 193.5 Q 93.5 193.5 93.5 189 Z" fill="var(--mk-sq, #1fe6dc)"/>
+    </g>
+  </defs>
+</svg>
+
+<!-- ================= PRELOADER ================= -->
+<div id="preloader" aria-hidden="true">
+  <span class="pre-corner tl">Prception&reg;</span>
+  <span class="pre-corner tr">Creative Studio</span>
+  <span class="pre-corner bl">Loading Experience</span>
+
+  <div class="pre-logo">
+    <svg viewBox="0 0 166 210">
+      <defs>
+        <clipPath id="fillClip"><rect id="fillRect" x="-10" y="210" width="186" height="230" /></clipPath>
+      </defs>
+      <g opacity="0.12"><use href="#prception-mark" /></g>
+      <g clip-path="url(#fillClip)"><use href="#prception-mark" /></g>
+    </svg>
+  </div>
+
+  <div class="pre-count"><span id="count">0</span><sup>%</sup></div>
+</div>
+<noscript><style>#preloader { display: none; } body.locked { overflow: auto; }</style></noscript>
+
+<!-- ================= FULLSCREEN MENU ================= -->
+<div class="menu-overlay" id="menuOverlay">
+  <button class="pill ghost menu-close" id="menuClose" aria-label="Close menu">Close</button>
+  <nav>
+    <a href="#work">Work</a>
+    <a href="#focus">Studio</a>
+    <a href="#work">Services</a>
+    <a href="#work">Contact</a>
+  </nav>
+</div>
+
+<!-- ================= HERO ================= -->
+<section class="intro" id="intro">
+  <div class="stage">
+
+    <!-- centered 3D glass logo (fans out of its own slabs) -->
+    <div class="sign" id="sign"></div>
+
+    <!-- UI layer: hero headline + corner furniture (always the intro beat) -->
+    <div class="stage-ui" id="stageUi">
+      <div class="hero-center">
+        <h1 class="tagline">
+          <span class="rv" style="--d:0.35s"><span>Shaping how the</span></span><br />
+          <span class="rv" style="--d:0.45s"><span>world <span class="accent">perceives</span>.</span></span>
+        </h1>
+      </div>
+
+      <a class="scroll-orb" href="#focus" aria-label="Scroll down">&darr;</a>
+    </div>
+
+    <!-- Scroll BEATS: cross-fade over the animating logo, tied to scroll progress.
+         data-in / data-out are the scroll-progress windows each beat is visible. -->
+    <div class="beats" id="beats">
+      <!-- one expand→rejoin arc: beats cross-fade along it, the last landing as
+           the logo re-joins into the Focused Vision handoff -->
+      <!-- 01 — about statement -->
+      <div class="beat" data-in="0.10" data-out="0.38">
+        <span class="edge-label">About</span>
+        <p class="statement">Prception is an independent creative studio shaping how the world <span class="accent">perceives</span> brands — through strategy, design, and technology.</p>
+      </div>
+
+      <!-- 02 — two-column mission -->
+      <div class="beat" data-in="0.42" data-out="0.66">
+        <div class="col-caps">We design for perception<br />clarity first, craft always,<br />built to last.</div>
+        <div class="col-mission">
+          <p>We make technology feel human — intuitive, purposeful, and meaningful to the people it reaches.</p>
+          <a class="mono-link" href="#work">More about us <span>&rarr;</span></a>
+        </div>
+      </div>
+
+      <!-- 03 — giant marquee + outcome -->
+      <div class="beat" data-in="0.56" data-out="1.0">
+        <div class="col-caps">Focused vision.<br />Measured execution.</div>
+        <div class="marquee" aria-hidden="true">
+          <div class="marquee-track">
+            <span>Impact</span><i>+</i><span>Inspire</span><i>+</i><span>Innovate</span><i>+</i>
+            <span>Impact</span><i>+</i><span>Inspire</span><i>+</i><span>Innovate</span><i>+</i>
+          </div>
+        </div>
+        <div class="from-idea">&#10022; From idea to outcome.</div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="site-header">
+      <a class="brand" href="#">
+        <img src="assets/images/logo/PRception%20Tm.png" alt="Prception" class="brand-logo" />
+      </a>
+      <div class="nav-actions">
+        <a class="pill solid" href="#work">Let&rsquo;s Talk</a>
+        <button class="pill ghost" id="menuBtn" aria-label="Open menu">Menu <span class="bars"><i></i><i></i></span></button>
+      </div>
+    </header>
+
+  </div>
+</section>
+
+<!-- ================= FOCUSED VISION (pin releases here) ================= -->
+<section class="focus" id="focus">
+  <div class="focus-inner">
+    <span class="focus-idx">Approach</span>
+    <h2 class="focus-h"><span class="accent">Focused vision.</span><br />Measured execution.</h2>
+    <p class="focus-sub">From idea to outcome — every decision made with intent.</p>
+  </div>
+</section>
+
+<!-- ================= WORK ================= -->
+<section class="work" id="work">
+  <div class="work-head">
+    <h2>Selected Work</h2>
+    <span class="idx">( 01 &mdash; 04 )</span>
+  </div>
+  <div class="tiles">
+    <div class="tile"><span class="num">01</span><span class="label">Brand Systems</span></div>
+    <div class="tile"><span class="num">02</span><span class="label">Motion &amp; 3D</span></div>
+    <div class="tile"><span class="num">03</span><span class="label">Interactive</span></div>
+    <div class="tile"><span class="num">04</span><span class="label">Film &amp; Content</span></div>
+  </div>
+</section>
+
+<footer>
+  <span>Prception&reg; &mdash; Creative Studio</span>
+  <span>Made with perception</span>
+</footer>
+
+<!-- ============ 3D glass logo (Three.js) ============ -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { Line2 } from "three/addons/lines/Line2.js";
+import { LineMaterial } from "three/addons/lines/LineMaterial.js";
+import { LineGeometry } from "three/addons/lines/LineGeometry.js";
+
+const mount = document.getElementById("sign");
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+} catch (e) { mount.style.display = "none"; throw e; }
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+mount.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(0, 0, 7.2);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+// ---- lights ----
+const key = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(-3, 4, 5); scene.add(key);
+const tealRim  = new THREE.PointLight(0x2fe6e0, 9, 14, 2); tealRim.position.set(2.5, -0.5, 2.5); scene.add(tealRim);
+const tealRim2 = new THREE.PointLight(0x18d0ff, 5, 14, 2); tealRim2.position.set(-2.5, 1.5, 2); scene.add(tealRim2);
+scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+
+// ---- EXACT logo geometry ----
+// Contours auto-traced from the official mark (assets/images/logo/PRception Tm.png),
+// normalized to a 2-unit height centered at the origin. Flat [x0,y0,x1,y1,...] pairs.
+//   [0] the P/play body — its play-triangle inlet is part of the outline
+//   [1] the detached rounded square with its dot-hook
+const LOGO_DATA = [
+  { outer: [-0.419,0.999,-0.406,1.0,-0.393,0.999,-0.36,0.996,-0.331,0.991,-0.292,0.979,-0.272,0.971,-0.239,0.955,0.576,0.484,0.598,0.469,0.63,0.444,0.649,0.424,0.674,0.393,0.692,0.364,0.708,0.33,0.72,0.299,0.729,0.263,0.735,0.218,0.735,0.193,0.731,0.154,0.724,0.116,0.714,0.086,0.697,0.047,0.674,0.01,0.649,-0.022,0.624,-0.047,0.595,-0.07,0.578,-0.081,0.253,-0.268,0.241,-0.274,0.23,-0.276,0.214,-0.277,0.201,-0.274,0.187,-0.268,0.178,-0.26,0.167,-0.248,0.065,-0.064,0.051,-0.038,0.049,-0.033,0.05,-0.028,0.056,-0.024,0.153,0.032,0.17,0.044,0.185,0.058,0.197,0.076,0.202,0.085,0.208,0.105,0.211,0.122,0.211,0.135,0.207,0.152,0.204,0.163,0.194,0.184,0.184,0.197,0.176,0.206,0.16,0.218,-0.115,0.377,-0.135,0.388,-0.147,0.393,-0.16,0.396,-0.18,0.399,-0.204,0.396,-0.215,0.393,-0.233,0.384,-0.247,0.376,-0.261,0.362,-0.272,0.347,-0.278,0.336,-0.283,0.322,-0.287,0.308,-0.288,0.295,-0.288,-0.397,-0.287,-0.41,-0.284,-0.419,-0.28,-0.426,-0.27,-0.438,-0.258,-0.446,-0.244,-0.45,-0.231,-0.45,0.004,-0.45,0.014,-0.452,0.017,-0.457,0.018,-0.467,0.018,-0.949,0.017,-0.956,0.013,-0.966,0.009,-0.974,0.003,-0.981,-0.005,-0.988,-0.014,-0.993,-0.031,-0.999,-0.047,-1.0,-0.503,-1.0,-0.538,-0.996,-0.562,-0.991,-0.601,-0.976,-0.63,-0.96,-0.652,-0.943,-0.678,-0.917,-0.697,-0.891,-0.712,-0.866,-0.72,-0.846,-0.731,-0.809,-0.734,-0.789,-0.735,-0.776,-0.735,0.688,-0.731,0.724,-0.723,0.759,-0.717,0.778,-0.708,0.801,-0.698,0.822,-0.674,0.86,-0.649,0.891,-0.635,0.906,-0.609,0.928,-0.584,0.946,-0.544,0.968,-0.516,0.979,-0.477,0.991,-0.445,0.996,-0.422,0.998],
+    holes: [] },
+  { outer: [0.212,-0.323,0.217,-0.321,0.225,-0.32,0.398,-0.32,0.411,-0.321,0.428,-0.324,0.444,-0.331,0.457,-0.341,0.47,-0.355,0.476,-0.364,0.481,-0.376,0.485,-0.395,0.486,-0.411,0.486,-0.632,0.485,-0.642,0.48,-0.663,0.472,-0.68,0.457,-0.696,0.442,-0.707,0.423,-0.714,0.398,-0.717,0.217,-0.717,0.203,-0.716,0.183,-0.711,0.17,-0.704,0.158,-0.696,0.147,-0.684,0.138,-0.668,0.133,-0.653,0.132,-0.643,0.132,-0.467,0.132,-0.459,0.135,-0.454,0.139,-0.452,0.146,-0.45,0.211,-0.45,0.221,-0.452,0.227,-0.455,0.235,-0.472,0.246,-0.483,0.259,-0.491,0.273,-0.493,0.289,-0.491,0.3,-0.486,0.308,-0.479,0.315,-0.472,0.321,-0.458,0.321,-0.448,0.32,-0.435,0.317,-0.426,0.311,-0.416,0.3,-0.407,0.283,-0.401,0.271,-0.4,0.256,-0.403,0.251,-0.401,0.222,-0.351,0.212,-0.331,0.211,-0.324],
+    holes: [] },
+];
+
+function toVec2(flat) {
+  const v = [];
+  for (let i = 0; i < flat.length; i += 2) v.push(new THREE.Vector2(flat[i], flat[i + 1]));
+  return v;
+}
+function toPoly(flat) {
+  const v = [];
+  for (let i = 0; i < flat.length; i += 2) v.push({ x: flat[i], y: flat[i + 1] });
+  return v;
+}
+const logoShapes = LOGO_DATA.map((d) => {
+  const sh = new THREE.Shape(toVec2(d.outer));
+  for (const h of d.holes) sh.holes.push(new THREE.Path(toVec2(h)));
+  return sh;
+});
+// same contours as point polygons, for the shard clipping below (the traced
+// contours carry their negative space in the outer loop — no hole loops)
+const logoPolys = LOGO_DATA.map((d) => toPoly(d.outer));
+
+// no bevel: the bevel used to push the backing 0.05 past the skin's
+// silhouette, so the inner structure poked out of the skin at the sides
+const extrude = { depth: 0.24, bevelEnabled: false, curveSegments: 40 };
+
+const glass = new THREE.MeshPhysicalMaterial({
+  color: 0x0b1418, metalness: 0.0, roughness: 0.05, transmission: 0.92, thickness: 1.3,
+  ior: 1.5, clearcoat: 1.0, clearcoatRoughness: 0.04, envMapIntensity: 1.5,
+  attenuationColor: new THREE.Color(0x0e2a2c), attenuationDistance: 2.4,
+});
+
+// ---- SKIN + OUTLINE (trionn mechanic) ----
+// The logo has two parts sharing the exact same silhouette:
+//   1. OUTLINE  — the glowing teal wireframe edges of the logo. Always present,
+//                 never moves. This is the "just the outline stays" layer.
+//   2. SKIN     — the solid glass surface sitting ON the outline. It is split
+//                 into a few skin-shards that PEEL/FAN away on scroll, leaving
+//                 the bare outline behind, then settle back to re-clad the logo.
+const group = new THREE.Group();
+
+// --- geometry shared by both parts (exact traced contours) ---
+const mainGeos = logoShapes.map((sh) => new THREE.ExtrudeGeometry(sh, extrude));
+
+// 1) OUTLINE — glowing teal contour rings, fixed in place. Drawn straight
+// from the traced logo polygons (EdgesGeometry on the beveled solid emits
+// stray crumpled fragments where the bevel pinches in the narrow throat,
+// so we draw the true contours instead: front ring + back ring per loop).
+const outlineMat = new THREE.LineBasicMaterial({ color: 0x2fe6e0 });
+const outlineGrp = new THREE.Group();
+function contourRingGeo(loopFlat) {
+  const pts = [];
+  for (let i = 0; i < loopFlat.length; i += 2) pts.push(new THREE.Vector3(loopFlat[i], loopFlat[i + 1], 0));
+  return new THREE.BufferGeometry().setFromPoints(pts);
+}
+const ringGeos = [];
+for (const d of LOGO_DATA) {
+  ringGeos.push(contourRingGeo(d.outer));
+  for (const h of d.holes) ringGeos.push(contourRingGeo(h));
+}
+for (const g of ringGeos) for (const z of [0, 0.24]) {
+  const ring = new THREE.LineLoop(g, outlineMat);
+  ring.position.z = z;
+  outlineGrp.add(ring);
+}
+// a faint solid backing so the outline reads as a hollow logo, not floating lines
+const backingMat = new THREE.MeshPhysicalMaterial({
+  color: 0x0a1216, metalness: 0.0, roughness: 0.4, transmission: 0.6,
+  thickness: 0.6, transparent: true, opacity: 0.25,
+});
+for (const g of mainGeos) {
+  const backing = new THREE.Mesh(g, backingMat);
+  backing.scale.set(0.985, 0.985, 0.9);
+  outlineGrp.add(backing);
+}
+group.add(outlineGrp);
+
+// 2) SKIN — the solid glass surface, cut into a GRID of real pieces
+// (trionn-style shatter). Each piece is the logo polygon clipped to an x/y
+// cell via Sutherland–Hodgman, extruded, and given its own radial scatter
+// direction with per-piece stagger so the burst and rejoin feel soft/organic.
+const GRID_X = 5, GRID_Y = 4;
+let X_MIN = Infinity, X_MAX = -Infinity, Y_MIN = Infinity, Y_MAX = -Infinity;
+for (const poly of logoPolys) for (const pt of poly) {
+  if (pt.x < X_MIN) X_MIN = pt.x;
+  if (pt.x > X_MAX) X_MAX = pt.x;
+  if (pt.y < Y_MIN) Y_MIN = pt.y;
+  if (pt.y > Y_MAX) Y_MAX = pt.y;
+}
+X_MIN -= 0.02; X_MAX += 0.02; Y_MIN -= 0.02; Y_MAX += 0.02;
+const cellW = (X_MAX - X_MIN) / GRID_X, cellH = (Y_MAX - Y_MIN) / GRID_Y;
+const skinShards = [];
+
+// split a simple polygon by the line `ax = v`, keeping the side where the
+// coordinate is >= v (or <= v when keepGE is false). Unlike Sutherland–
+// Hodgman this returns MULTIPLE polygons when the cut leaves disjoint
+// pieces: the concave logo contour falls apart like that in cells around
+// the chevron notch, and S-H's single stitched loop closes straight across
+// the notch, which the triangulator then fills with phantom skin.
+function splitPolyHalfPlane(poly, ax, v, keepGE) {
+  const other = ax === "x" ? "y" : "x";
+  const inside = (p) => (keepGE ? p[ax] - v : v - p[ax]) > -1e-9;
+  const n = poly.length;
+  let start = -1;
+  for (let i = 0; i < n; i++) if (!inside(poly[i])) { start = i; break; }
+  if (start === -1) return [poly]; // fully kept
+  // walk from an outside vertex, collecting the kept chains; every chain
+  // begins and ends with an intersection point sitting exactly on the cut line
+  const chains = [];
+  let cur = null;
+  for (let k = 0; k < n; k++) {
+    const a = poly[(start + k) % n], b = poly[(start + k + 1) % n];
+    const ain = inside(a), bin = inside(b);
+    if (ain) cur.push(a);
+    if (ain !== bin) {
+      const t = (v - a[ax]) / (b[ax] - a[ax]);
+      const q = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+      q[ax] = v; // snap exactly onto the cut plane
+      if (bin) chains.push(cur = [q]); else { cur.push(q); cur = null; }
+    }
+  }
+  if (!chains.length) return [];
+  // along the cut line the polygon interior spans the intervals between
+  // consecutive sorted crossing points; those connectors become the cut
+  // edges that join chains back up into closed loops
+  const ends = [];
+  chains.forEach((c, ci) => {
+    ends.push({ pos: c[0][other], ci, entry: true });
+    ends.push({ pos: c[c.length - 1][other], ci, entry: false });
+  });
+  ends.sort((a, b) => a.pos - b.pos);
+  const next = new Array(chains.length).fill(-1); // chain exit -> chain entry
+  for (let i = 0; i + 1 < ends.length; i += 2) {
+    const exit = ends[i].entry ? ends[i + 1] : ends[i];
+    const entry = ends[i].entry ? ends[i] : ends[i + 1];
+    next[exit.ci] = entry.ci;
+  }
+  const out = [], used = new Array(chains.length).fill(false);
+  for (let s = 0; s < chains.length; s++) {
+    if (used[s]) continue;
+    const loop = [];
+    for (let ci = s; ci !== -1 && !used[ci]; ci = next[ci]) {
+      used[ci] = true;
+      loop.push(...chains[ci]);
+    }
+    if (loop.length >= 3) out.push(loop);
+  }
+  return out;
+}
+
+const polyArea = (p) => {
+  let a = 0;
+  for (let i = 0; i < p.length; i++) {
+    const q = p[(i + 1) % p.length];
+    a += p[i].x * q.y - q.x * p[i].y;
+  }
+  return a / 2;
+};
+
+// clip a polygon to a grid cell, as a list of disjoint polygons
+function clipPolyCell(poly, x0, x1, y0, y1) {
+  let pieces = [poly];
+  for (const [ax, v, keepGE] of [["x", x0, true], ["x", x1, false], ["y", y0, true], ["y", y1, false]]) {
+    const cut = [];
+    for (const p of pieces) cut.push(...splitPolyHalfPlane(p, ax, v, keepGE));
+    pieces = cut.filter((p) => p.length >= 3 && Math.abs(polyArea(p)) > 1e-5);
+    if (!pieces.length) break;
+  }
+  return pieces;
+}
+
+function shardShape(x0, x1, y0, y1) {
+  const shapes = [];
+  for (const poly of logoPolys)
+    for (const piece of clipPolyCell(poly, x0, x1, y0, y1))
+      shapes.push(new THREE.Shape(piece.map((p) => new THREE.Vector2(p.x, p.y))));
+  return shapes;
+}
+
+// no bevel on the skin pieces: flat cuts butt together flush, so the seams
+// between shards are invisible while the skin is assembled.
+// The skin is DEEPER than the inner outline/backing structure and starts
+// behind it (see SKIN_Z), so the glass wraps the logo on every side —
+// front, back and edge walls — instead of only cladding the front face.
+const SKIN_DEPTH = 0.4, SKIN_Z = -0.08;
+const skinExtrude = { depth: SKIN_DEPTH, bevelEnabled: false, curveSegments: 6 };
+
+// seeded RNG so the shatter is organic but identical on every load
+let seed = 7;
+const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+for (let gx = 0; gx < GRID_X; gx++) for (let gy = 0; gy < GRID_Y; gy++) {
+  const x0 = X_MIN + gx * cellW, x1 = x0 + cellW;
+  const y0 = Y_MIN + gy * cellH, y1 = y0 + cellH;
+  const gMat = glass.clone(); gMat.transparent = true;
+
+  // pure glass pieces — no edge lines on the cut shards: clipping the concave
+  // logo shape leaves stray edge fragments, and the fixed outline plus the
+  // whole-skin rim already carry the teal glow
+  const shard = new THREE.Group();
+  for (const sh of shardShape(x0, x1, y0, y1)) {
+    const geo = new THREE.ExtrudeGeometry(sh, skinExtrude);
+    const m = new THREE.Mesh(geo, gMat); m.position.z = SKIN_Z;
+    shard.add(m);
+  }
+  if (!shard.children.length) continue;
+
+  // each piece remembers its HOME cell centre; it fans straight out from
+  // the side of the logo it sits on, keeping its original orientation
+  skinShards.push({
+    grp: shard, mat: gMat,
+    hx: (x0 + x1) / 2, hy: (y0 + y1) / 2,
+    cur: 0,                        // per-piece eased fan value
+    delay: rand() * 0.22,          // staggered departure/return
+    rate: 0.05 + rand() * 0.04,    // per-piece softness
+    jit: (rand() - 0.5) * 0.9,     // organic angular jitter
+    dist: 1.0 + rand() * 1.1,      // how far it flies — a loose halo, not a blast
+    peelZ: (rand() - 0.5) * 2.2,   // depth scatter: in FRONT and BEHIND alike
+    bobF: 0.5 + rand() * 0.7,      // idle drift frequency while scattered
+    bobP: rand() * Math.PI * 2,    // idle drift phase
+  });
+  group.add(shard);
+}
+
+// 3) WHOLE SKIN — a single UNCUT copy of the glass skin, shown while the logo
+// is fully assembled. The cut shards (with their internal cut walls that catch
+// reflections as faint seam lines) are swapped in only once the peel starts.
+// Same contours, same extrude, same z-offset, so the swap is pixel-identical.
+const wholeSkin = new THREE.Group();
+const wholeGlass = glass.clone(); wholeGlass.transparent = true;
+for (const sh of logoShapes) {
+  const geo = new THREE.ExtrudeGeometry(sh, skinExtrude);
+  const m = new THREE.Mesh(geo, wholeGlass); m.position.z = SKIN_Z;
+  wholeSkin.add(m);
+}
+group.add(wholeSkin);
+
+// its teal rim lives OUTSIDE the swapped skin and fades in with the rejoin,
+// so the outline never pops in late on the shard -> whole-skin swap
+const rimMat = new THREE.LineBasicMaterial({ color: 0x2fe6e0, transparent: true, opacity: 0 });
+const skinRim = new THREE.Group();
+for (const g of ringGeos) for (const z of [SKIN_Z, SKIN_Z + SKIN_DEPTH]) {
+  const ring = new THREE.LineLoop(g, rimMat);
+  ring.position.z = z;
+  skinRim.add(ring);
+}
+group.add(skinRim);
+
+const box = new THREE.Box3().setFromObject(group);
+group.position.sub(box.getCenter(new THREE.Vector3()));
+const outer = new THREE.Group();
+outer.add(group);
+outer.scale.setScalar(1.25);
+scene.add(outer);
+
+// ---- drifting embers: ambient debris that glows while the pieces are scattered ----
+const EMBERS = 120;
+const ePos = new Float32Array(EMBERS * 3);
+for (let i = 0; i < EMBERS; i++) {
+  const r = 1.2 + rand() * 2.6, th = rand() * Math.PI * 2, ph = Math.acos(2 * rand() - 1);
+  ePos[i * 3] = r * Math.sin(ph) * Math.cos(th);
+  ePos[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th) * 0.7;
+  ePos[i * 3 + 2] = r * Math.cos(ph) * 0.6;
+}
+const emberGeo = new THREE.BufferGeometry();
+emberGeo.setAttribute("position", new THREE.BufferAttribute(ePos, 3));
+const emberMat = new THREE.PointsMaterial({
+  color: 0x2fe6e0, size: 0.022, transparent: true, opacity: 0,
+  blending: THREE.AdditiveBlending, depthWrite: false,
+});
+const embers = new THREE.Points(emberGeo, emberMat);
+outer.add(embers);
+
+// ---- lightning sparks: small arcs that crackle ACROSS the logo ----
+// The pointer is raycast against the logo meshes; on a hit, thin fractal
+// bolts CONNECT the touch point to points on the logo's own contour, so the
+// lightning spans the surface from one side to the other instead of flying
+// off into the air. The bolts live inside the logo's group, so they ride its
+// rotation and stay glued to the mark; their jitter is regenerated every few
+// frames for a live electric crackle.
+const sparkTargets = [];
+group.traverse((o) => { if (o.isMesh) sparkTargets.push(o); });
+const raycaster = new THREE.Raycaster();
+const pointerNDC = new THREE.Vector2(-2, -2);
+let pointerSeen = false, burstQueued = false, nextSparkT = 0;
+addEventListener("pointermove", (e) => {
+  pointerNDC.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  pointerSeen = true;
+}, { passive: true });
+addEventListener("pointerdown", (e) => {
+  pointerNDC.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  pointerSeen = true; burstQueued = true;
+}, { passive: true });
+
+// arc endpoints snap to the logo's outline, sampled from the traced contours
+// (these are in the logo group's local space, same as the mesh geometry)
+const arcAnchors = [];
+for (const poly of logoPolys) for (let i = 0; i < poly.length; i += 3) arcAnchors.push(poly[i]);
+
+const sparkGroup = new THREE.Group();
+group.add(sparkGroup);
+const arcs = [];    // live bolts: { A, B, lines[core, glow], life, ttl }
+const flecks = [];  // tiny contact sparks at the touch point
+const flash = new THREE.PointLight(0x2fe6e0, 0, 6, 2);
+scene.add(flash);
+let flashI = 0;
+
+// fractal midpoint displacement between the two endpoints: each midpoint is
+// pushed sideways IN THE LOGO'S FACE PLANE, so the bolt zig-zags across the
+// surface (only a hair of z jitter, to hover just off the glass)
+const BOLT_PTS = 17;
+function displace(pts, i0, i1, amp) {
+  if (i1 - i0 < 2) return;
+  const im = (i0 + i1) >> 1;
+  const a = pts[i0], b = pts[i1];
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1e-6;
+  const off = (Math.random() - 0.5) * 2 * amp * len;
+  pts[im] = {
+    x: (a.x + b.x) / 2 - (dy / len) * off,
+    y: (a.y + b.y) / 2 + (dx / len) * off,
+    z: (a.z + b.z) / 2 + (Math.random() - 0.5) * 0.03,
+  };
+  displace(pts, i0, im, amp);
+  displace(pts, im, i1, amp);
+}
+function regenArc(s) {
+  for (const line of s.lines) {
+    const pts = new Array(BOLT_PTS);
+    pts[0] = s.A;
+    pts[BOLT_PTS - 1] = s.B;
+    displace(pts, 0, BOLT_PTS - 1, 0.13);
+    const flat = new Float32Array(BOLT_PTS * 3);
+    for (let i = 0; i < BOLT_PTS; i++) {
+      flat[i * 3] = pts[i].x; flat[i * 3 + 1] = pts[i].y; flat[i * 3 + 2] = pts[i].z;
+    }
+    line.geometry.setPositions(flat);
+  }
+}
+// fat screen-space lines (Line2): LineBasicMaterial linewidth is ignored on
+// most GPUs, so real thickness needs the addons line renderer
+function makeArcLine(color, opacity, width, additive) {
+  const geo = new LineGeometry();
+  geo.setPositions(new Float32Array(BOLT_PTS * 3));
+  const mat = new LineMaterial({
+    color, transparent: true, opacity, linewidth: width,
+    // the fat aura uses normal blending: additive doubles up where the line
+    // segments overlap at each joint, which reads as a string of bright beads
+    blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+    depthWrite: false, depthTest: false,
+  });
+  mat.resolution.set(innerWidth, innerHeight);
+  const line = new Line2(geo, mat);
+  line.frustumCulled = false;
+  line.renderOrder = 999; // arcs glow over the glass, never sunk into it
+  return line;
+}
+
+function spawnArc(hitWorld, big) {
+  const local = group.worldToLocal(hitWorld.clone());
+  const n = big ? 4 : 1 + (Math.random() < 0.3 ? 1 : 0);
+  for (let k = 0; k < n; k++) {
+    if (arcs.length > 24) break; // safety cap
+    // pick a contour point a small-to-medium stretch away: the bolt bridges
+    // the gap from where you touch to that edge of the logo
+    const minD = 0.3, maxD = big ? 1.8 : 1.1;
+    const cands = arcAnchors.filter((a) => {
+      const d = Math.hypot(a.x - local.x, a.y - local.y);
+      return d > minD && d < maxD;
+    });
+    if (!cands.length) break;
+    const target = cands[(Math.random() * cands.length) | 0];
+    const A = { x: local.x, y: local.y, z: local.z };
+    const B = { x: target.x, y: target.y, z: local.z + (Math.random() - 0.5) * 0.05 };
+    // thick teal core + a wider soft teal aura with its own jitter —
+    // both in the same teal as the logo's rim lighting
+    const core = makeArcLine(0x2fe6e0, 1, 3.5, false);
+    const glow = makeArcLine(0x2fe6e0, 0.22, 8, false);
+    sparkGroup.add(core, glow);
+    const s = { A, B, lines: [core, glow], life: 0, ttl: (big ? 0.2 : 0.12) + Math.random() * 0.08 };
+    regenArc(s);
+    arcs.push(s);
+  }
+  // a pinch of tiny contact sparks right at the touch point (stays local)
+  const nF = big ? 8 : 3;
+  const fPos = new Float32Array(nF * 3);
+  const vel = [];
+  for (let i = 0; i < nF; i++) {
+    fPos[i * 3] = local.x; fPos[i * 3 + 1] = local.y; fPos[i * 3 + 2] = local.z;
+    const a = Math.random() * Math.PI * 2;
+    vel.push({ x: Math.cos(a) * (0.4 + Math.random() * 0.7), y: Math.sin(a) * (0.4 + Math.random() * 0.7), z: (Math.random() - 0.5) * 0.3 });
+  }
+  const fGeo = new THREE.BufferGeometry();
+  fGeo.setAttribute("position", new THREE.BufferAttribute(fPos, 3));
+  const fMat = new THREE.PointsMaterial({
+    color: 0x2fe6e0, size: 0.03, transparent: true, opacity: 1,
+    blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false,
+  });
+  const ptsObj = new THREE.Points(fGeo, fMat);
+  ptsObj.frustumCulled = false;
+  ptsObj.renderOrder = 999;
+  sparkGroup.add(ptsObj);
+  flecks.push({ pts: ptsObj, mat: fMat, vel, life: 0, ttl: 0.2 + Math.random() * 0.12 });
+  flash.position.copy(hitWorld);
+  flashI = Math.max(flashI, big ? 9 : 4);
+}
+
+// raycaster skips parent visibility, so walk the chain ourselves
+function chainVisible(o) {
+  for (; o; o = o.parent) if (!o.visible) return false;
+  return true;
+}
+
+function updateSparks(dt) {
+  if (pointerSeen) {
+    raycaster.setFromCamera(pointerNDC, camera);
+    const hit = raycaster.intersectObjects(sparkTargets, false).find((h) => chainVisible(h.object));
+    if (hit) {
+      if (burstQueued) spawnArc(hit.point, true);
+      else if (t > nextSparkT) { spawnArc(hit.point, false); nextSparkT = t + 0.05 + Math.random() * 0.04; }
+      mount.style.cursor = "pointer";
+    } else {
+      mount.style.cursor = "";
+    }
+    burstQueued = false;
+  }
+  for (let i = arcs.length - 1; i >= 0; i--) {
+    const s = arcs[i];
+    s.life += dt;
+    const k = 1 - s.life / s.ttl;
+    if (k <= 0) {
+      for (const l of s.lines) { sparkGroup.remove(l); l.geometry.dispose(); l.material.dispose(); }
+      arcs.splice(i, 1);
+      continue;
+    }
+    // the bolt re-forks every few frames and flickers as it dies — the
+    // path itself dances, like a real arc hunting for ground
+    if (Math.random() < 0.6) regenArc(s);
+    s.lines[0].material.opacity = k * (0.65 + Math.random() * 0.35);
+    s.lines[1].material.opacity = 0.3 * k;
+  }
+  for (let i = flecks.length - 1; i >= 0; i--) {
+    const f = flecks[i];
+    f.life += dt;
+    const k = 1 - f.life / f.ttl;
+    if (k <= 0) {
+      sparkGroup.remove(f.pts); f.pts.geometry.dispose(); f.mat.dispose();
+      flecks.splice(i, 1);
+    } else {
+      const pos = f.pts.geometry.attributes.position;
+      for (let j = 0; j < f.vel.length; j++) {
+        pos.array[j * 3] += f.vel[j].x * dt;
+        pos.array[j * 3 + 1] += (f.vel[j].y - f.life * 1.5) * dt; // slight fall
+        pos.array[j * 3 + 2] += f.vel[j].z * dt;
+      }
+      pos.needsUpdate = true;
+      f.mat.opacity = k;
+    }
+  }
+  flashI *= 0.82;
+  flash.intensity = flashI;
+}
+
+/* fan amount: 0 = skin fully clads the logo, 1 = skin peeled off, only outline.
+   window.__logoFan drives it. Starts peeled so load reveal clads the logo. */
+window.__logoFan = 1;
+let fanCur = 1;
+function applyFan(f) {
+  // assembled -> show the seamless uncut skin; scattered -> the cut pieces.
+  // Swap as soon as every piece is VISUALLY home (a few hundredths of eased
+  // progress moves it well under a pixel): lingering on the flush cut shards
+  // makes their coplanar cut walls z-fight, which flashes dark in the centre.
+  let settled = f < 0.05;
+  if (settled) for (const s of skinShards) if (s.cur > 0.06) { settled = false; break; }
+  if (settled) for (const s of skinShards) s.cur = 0; // clean start for the next burst
+  wholeSkin.visible = settled;
+  // rim glow eases in over the tail of the rejoin instead of popping at the swap
+  rimMat.opacity = Math.min(Math.max((0.5 - f) / 0.5, 0), 1);
+  for (const s of skinShards) {
+    s.grp.visible = !settled;
+    // staggered, per-piece softened progress -> organic burst and soft rejoin
+    const local = Math.min(Math.max((f - s.delay) / (1 - s.delay), 0), 1);
+    s.cur += (local - s.cur) * s.rate;
+    const e = s.cur * s.cur * (3 - 2 * s.cur); // smoothstep
+    // fan straight out from the side the piece sits on, in the logo's OWN
+    // space: the offset rides the logo's rotation, and the piece itself
+    // never rotates — it just slides out and back in place
+    const a = Math.atan2(s.hy + group.position.y, s.hx + group.position.x) + s.jit;
+    // gentle vertical drift while scattered, so the cloud still breathes
+    const bob = Math.sin(t * s.bobF + s.bobP) * 0.07 * e;
+    s.grp.position.set(Math.cos(a) * s.dist * e, Math.sin(a) * s.dist * 0.8 * e + bob, s.peelZ * e);
+    // pieces go ghost almost as soon as they leave home and only re-solidify
+    // over the last stretch of the return, so displaced slabs never read as
+    // dark chunks drifting across the logo's empty areas mid-rejoin
+    s.mat.opacity = 1 - 0.85 * Math.min(e / 0.22, 1);
+  }
+}
+
+// ---- interaction ----
+let mx = 0, my = 0, tmx = 0, tmy = 0;
+addEventListener("pointermove", (e) => { tmx = (e.clientX / innerWidth) * 2 - 1; tmy = (e.clientY / innerHeight) * 2 - 1; }, { passive: true });
+addEventListener("resize", () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+window.__signZoom = 1;
+let t = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  t += 0.01;
+  mx += (tmx - mx) * 0.05; my += (tmy - my) * 0.05;
+  // scroll-driven travel of the whole logo (moves while panels peel)
+  const panX = window.__signPanX || 0;
+  const panY = window.__signPanY || 0;
+  const spin = window.__signSpin || 0;
+  // idle: a slow, clearly visible auto-sway centred on the straight-on front
+  // view — the logo keeps gently turning on its own even with no scroll or
+  // mouse, but always swings back to face front; scroll adds the real spin
+  outer.rotation.y = mx * 0.5 + Math.sin(t * 0.3) * 0.35 + spin;
+  outer.rotation.x = 0.05 + my * 0.3 + Math.cos(t * 0.5) * 0.06;
+  outer.position.x = panX;
+  outer.position.y = panY + Math.sin(t * 0.7) * 0.06;
+  // ease the shatter toward its scroll-driven target (soft, trionn-like)
+  const fanTarget = window.__logoFan == null ? 1 : window.__logoFan;
+  fanCur += (fanTarget - fanCur) * 0.07;
+  applyFan(fanCur);
+  embers.rotation.y = t * 0.06;
+  embers.rotation.x = Math.sin(t * 0.11) * 0.15;
+  emberMat.opacity = 0.05 + fanCur * 0.5;
+  const z = window.__signZoom || 1;
+  camera.position.z = 7.2 / z;
+  tealRim.intensity = 8 + Math.sin(t * 2) * 1.5;
+  updateSparks(0.016);
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+
+<!-- ============ Lenis smooth / inertial scroll ============ -->
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script>
+(function () {
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced || typeof Lenis === "undefined") return;
+  const lenis = new Lenis({
+    duration: 1.15,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    smoothWheel: true,
+    touchMultiplier: 1.2,
+  });
+  function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+  requestAnimationFrame(raf);
+  window.__lenis = lenis;
+})();
+</script>
+
+<!-- ============ Panels + preloader + scroll ============ -->
+<script>
+(function () {
+  const preloader = document.getElementById("preloader");
+  const countEl = document.getElementById("count");
+  const fillRect = document.getElementById("fillRect");
+  const stageUi = document.getElementById("stageUi");
+  const intro = document.getElementById("intro");
+  const body = document.body;
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  document.querySelectorAll(".rv > *").forEach((el) => {
+    const d = el.parentElement.style.getPropertyValue("--d");
+    if (d) el.style.transitionDelay = d;
+  });
+
+  /* ---------- Fullscreen menu ---------- */
+  const menuOverlay = document.getElementById("menuOverlay");
+  document.getElementById("menuBtn").addEventListener("click", () => menuOverlay.classList.add("open"));
+  document.getElementById("menuClose").addEventListener("click", () => menuOverlay.classList.remove("open"));
+  menuOverlay.querySelectorAll("nav a").forEach((a) =>
+    a.addEventListener("click", () => menuOverlay.classList.remove("open")));
+
+  /* ---------- Pinned scroll sequence (trionn-style, up to Focused Vision) ----
+     One long pin. Scroll progress p (0..1) scrubs a single timeline while
+     several TEXT BEATS cross-fade over the animating logo:
+       • logo skin peels apart + logo travels straight down (continuous)
+       • hero text fades as beat 01 fades in; beats 01/02/03 cross-fade at
+         their data-in/data-out windows (last beat = the Focused Vision line)
+       • a gentle camera dolly deepens through the run
+     Everything is reversible. Pin releases into the Focused Vision section. */
+  const MAX_SCALE = 2.4;
+  const LOG_MAX = Math.log(MAX_SCALE);
+  const FAN_END = 0.9;
+  const smooth = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  let ticking = false;
+  let loadBloom = 1;   // extra fan added at load, eased to 0 by finish()
+
+  // beat overlays: read their scroll windows once
+  const beats = Array.from(document.querySelectorAll(".beat")).map((el) => ({
+    el,
+    inP: parseFloat(el.dataset.in),
+    outP: parseFloat(el.dataset.out),
+  }));
+
+  function applyScroll() {
+    ticking = false;
+    const range = intro.offsetHeight - innerHeight;
+    if (range <= 0) return;
+    const p = Math.min(Math.max(window.scrollY / range, 0), 1);
+
+    // trionn-style arc: the skin BURSTS apart early, HOLDS scattered while the
+    // text beats travel through, then softly REJOINS — finishing early enough
+    // that the logo sits whole and still through the last beat.
+    const wave = p < 0.16 ? smooth(p / 0.16)                 // burst out
+              : p < 0.45 ? 1                                 // hold scattered
+              : p < 0.72 ? 1 - smooth((p - 0.45) / 0.27)     // soft rejoin
+              : 0;                                           // whole for the last beat + exit
+    window.__logoFan = Math.max(wave, loadBloom);
+    // logo stays centred in the viewport the whole time — one full turn, but
+    // compressed into the first 72% of the run so it lands facing front the
+    // moment the skin rejoins, then sits still through the last beat
+    window.__signPanX = 0;
+    window.__signPanY = 0;
+    window.__signSpin = smooth(Math.min(p / 0.72, 1)) * Math.PI * 2;
+    window.__signZoom = 1;
+
+    // hero text travels UP and fades as the first beat takes over
+    const heroUp = smooth(Math.min(p / 0.14, 1));
+    stageUi.style.transform = `translateY(${-heroUp * 120}px)`;
+    stageUi.style.opacity = String(Math.max(1 - p * 6, 0));
+
+    // Each beat physically SCROLLS the full screen height through its window,
+    // like a real section passing in front of the fixed 3D canvas: it rises
+    // from below the fold, crosses the middle, and exits above — while the
+    // logo keeps moving behind it.
+    for (const b of beats) {
+      const span = b.outP - b.inP;
+      const local = (p - b.inP) / span;               // -inf .. +inf, 0..1 inside window
+      // travel: +65% of the viewport (below) -> -65% (above)
+      const y = (0.5 - local) * innerHeight * 1.3;
+      // fade only near the extremes so it reads as scrolling, not blinking
+      const fade = Math.min(local / 0.15, 1) * Math.min((1 - local) / 0.15, 1);
+      const op = Math.max(0, Math.min(1, fade));
+      b.el.style.setProperty("--y", y.toFixed(1) + "px");
+      b.el.style.opacity = op.toFixed(3);
+      b.el.classList.toggle("on", op > 0.02);
+    }
+
+    // near the very end the whole pinned scene lifts away to hand off cleanly
+    const exit = smooth(Math.max((p - 0.9) / 0.1, 0));
+    document.getElementById("sign").style.transform = `translateY(${-exit * 12}vh)`;
+    document.getElementById("beats").style.transform = `translateY(${-exit * 12}vh)`;
+  }
+  function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(applyScroll); } }
+
+  if (!reduced) {
+    addEventListener("scroll", onScroll, { passive: true });
+    addEventListener("resize", onScroll);
+  }
+
+  /* ---------- Preloader ---------- */
+  function bloomTogether() {
+    // ease the load-bloom fan from 1 -> 0 so the logo assembles from its slabs
+    const dur = 1500, start = performance.now();
+    function step(now) {
+      const x = Math.min((now - start) / dur, 1);
+      loadBloom = 1 - smooth(x);
+      applyScroll();
+      if (x < 1) requestAnimationFrame(step); else loadBloom = 0;
+    }
+    requestAnimationFrame(step);
+  }
+
+  function finish() {
+    preloader.classList.add("done");
+    setTimeout(() => {
+      preloader.classList.add("lift");
+      body.classList.add("revealed");
+      body.classList.remove("locked");
+      bloomTogether();          // logo assembles from its own fanned slabs
+    }, reduced ? 100 : 550);
+    setTimeout(() => { preloader.style.display = "none"; }, 2000);
+  }
+
+  if (reduced) {
+    countEl.textContent = "100";
+    loadBloom = 0;
+    window.__logoFan = 0;
+    finish();
+    return;
+  }
+
+  const DURATION = 2400;
+  const easeInOutCubic = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const start = performance.now();
+  function frame(now) {
+    const x = Math.min((now - start) / DURATION, 1);
+    const e = easeInOutCubic(x);
+    countEl.textContent = Math.round(e * 100);
+    fillRect.setAttribute("y", String(210 - 230 * e));
+    if (x < 1) requestAnimationFrame(frame); else setTimeout(finish, 300);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
