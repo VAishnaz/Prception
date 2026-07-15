@@ -1,0 +1,27 @@
+<svg width="393" height="404" viewBox="0 0 393 404" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M48.0883 173.703C42.6556 160.587 39.8594 146.529 39.8594 132.333H147.963L147.963 240.437C133.767 240.437 119.71 237.641 106.594 232.208C93.478 226.775 81.5607 218.812 71.5223 208.774C61.4839 198.736 53.521 186.818 48.0883 173.703ZM48.0883 281.807C42.6556 268.691 39.8594 254.633 39.8594 240.437H147.963L147.963 348.541C133.767 348.541 119.71 345.745 106.594 340.312C93.478 334.879 81.5607 326.916 71.5223 316.878C61.4839 306.84 53.521 294.922 48.0883 281.807ZM147.965 132.333C147.965 146.529 150.761 160.587 156.194 173.703C161.627 186.818 169.589 198.736 179.628 208.774C189.666 218.812 201.583 226.775 214.699 232.208C227.815 237.641 241.872 240.437 256.069 240.437V132.333H147.965ZM156.194 281.807C150.761 268.691 147.965 254.633 147.965 240.437H256.069V348.541C241.872 348.541 227.815 345.745 214.699 340.312C201.583 334.879 189.666 326.916 179.628 316.878C169.589 306.84 161.627 294.922 156.194 281.807Z" fill="white"/>
+<g style="mix-blend-mode:exclusion">
+<circle cx="256.069" cy="132.333" r="107.604" stroke="white" stroke-dasharray="4 4"/>
+</g>
+<g style="mix-blend-mode:exclusion">
+<circle cx="147.963" cy="132.333" r="107.604" stroke="white" stroke-dasharray="4 4"/>
+</g>
+<g style="mix-blend-mode:exclusion">
+<circle cx="147.963" cy="240.437" r="107.604" stroke="white" stroke-dasharray="4 4"/>
+</g>
+<g style="mix-blend-mode:exclusion">
+<circle cx="256.069" cy="240.437" r="107.604" stroke="white" stroke-dasharray="4 4"/>
+</g>
+<g style="mix-blend-mode:exclusion">
+<line x1="-4.37114e-08" y1="131.5" x2="393" y2="131.5" stroke="white" stroke-dasharray="4 4"/>
+</g>
+<g style="mix-blend-mode:exclusion">
+<line x1="0.000555994" y1="239.5" x2="393.001" y2="239.937" stroke="white" stroke-dasharray="4 4"/>
+</g>
+<g style="mix-blend-mode:exclusion">
+<line x1="148.484" y1="-2.18557e-08" x2="148.484" y2="404" stroke="white" stroke-dasharray="4 4"/>
+</g>
+<g style="mix-blend-mode:exclusion">
+<line x1="256.961" y1="-2.18557e-08" x2="256.961" y2="404" stroke="white" stroke-dasharray="4 4"/>
+</g>
+</svg>

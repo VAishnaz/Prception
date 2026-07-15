@@ -6,7 +6,7 @@
 <title>Prception — Creative Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400..700&family=Martian+Mono:wght@300..500&family=Inter+Tight:wght@300..600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400..700&family=Martian+Mono:wght@300..500&family=Inter+Tight:wght@300..600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 166 210"><path fill="%231FE6DC" fill-rule="evenodd" d="M 62 61 Q 62 55 66.69 58.75 L 114.19 96.75 Q 122 103 115.44 110.55 L 85.94 144.47 Q 82 149 82 155 L 82 168 Q 82 175 75 175 L 69 175 Q 62 175 62 168 L 62 141 Q 62 135 66.24 130.76 L 89.05 107.95 Q 94 103 88.73 98.39 L 66.52 78.95 Q 62 75 62 69 Z M 74 79 Q 74 75 76.83 77.83 L 98.46 99.46 Q 102 103 98.46 106.54 L 76.83 128.17 Q 74 131 74 127 Z"/></svg>' />
 <style>
   :root {
@@ -22,6 +22,7 @@
     --line: rgba(216, 216, 216, 0.14);
     --font-grot: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
     --font-mono: "Martian Mono", "Courier New", monospace;
+    --font-display: "Instrument Serif", "Times New Roman", Georgia, serif;
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-inout: cubic-bezier(0.83, 0, 0.17, 1);
   }
@@ -40,55 +41,19 @@
   a { color: inherit; text-decoration: none; }
 
   /* ============================================================
-     PRELOADER
-     ============================================================ */
-  #preloader {
-    position: fixed; inset: 0; z-index: 100;
-    background: var(--bg);
-    transition: opacity 0.7s ease;
-  }
-  #preloader.lift { opacity: 0; pointer-events: none; }
-
-  .pre-corner {
-    position: absolute;
-    font-family: var(--font-grot);
-    font-size: 0.72rem; font-weight: 600;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--ink-dim);
-    opacity: 0; animation: fadeIn 0.9s var(--ease-out) 0.3s forwards;
-  }
-  .pre-corner.tl { top: 2rem; left: 2rem; }
-  .pre-corner.tr { top: 2rem; right: 2rem; }
-  .pre-corner.bl { bottom: 2.2rem; left: 2rem; }
-  #preloader.done .pre-corner { animation: fadeOut 0.4s ease forwards; }
-
-  .pre-logo {
-    position: absolute; top: 50%; left: 50%;
-    width: clamp(84px, 11vw, 128px);
-    transform: translate(-50%, -50%);
-    opacity: 0; animation: fadeIn 0.8s var(--ease-out) 0.15s forwards;
-  }
-  #preloader.done .pre-logo { animation: fadeOut 0.55s ease 0.15s both; }
-  .pre-logo svg { display: block; width: 100%; height: auto; overflow: visible; }
-
-  .pre-count {
-    position: absolute; right: 1.6rem; bottom: 0.4rem;
-    font-size: clamp(5.5rem, 14vw, 11rem); font-weight: 600;
-    letter-spacing: -0.04em; line-height: 1;
-    font-variant-numeric: tabular-nums; color: var(--ink);
-    opacity: 0; animation: fadeIn 0.9s var(--ease-out) 0.3s forwards;
-  }
-  .pre-count sup { font-size: 0.28em; font-weight: 500; vertical-align: super; color: var(--ink-dim); }
-  #preloader.done .pre-count { animation: fadeOutDown 0.45s ease forwards; }
-
-  @keyframes fadeIn { to { opacity: 1; } }
-  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-  @keyframes fadeOutDown { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(12px); } }
-
-  /* ============================================================
      HERO STAGE
      ============================================================ */
-  .intro { height: 340vh; position: relative; }
+  /* extra 100vh at the end: the logo sits idle while the Key Facts sheet
+     (its .pin wrapper is pulled up by -100svh) slides up OVER the still-stuck
+     stage — trionn's section-arrival mechanic */
+  /* Scroll budget: 313vh gets p from 0 to 1 (rescaled so p=1 lands at the
+     OLD p=0.71 mark — marquee just finished, logo whole/dropped/spun-still,
+     centered alone), then +200vh DWELL where .stage stays sticky-pinned
+     holding that exact frozen frame while the Key Facts wipe (gated off
+     scrollY, see applyScroll's ACTIVE_END) steps in and fully covers it,
+     +1vh so the sticky math has its usual trailing viewport. See
+     applyScroll() for how range is derived to match this exactly. */
+  .intro { height: 452vh; position: relative; }
   .stage {
     position: sticky; top: 0;
     height: 100svh; min-height: 560px;
@@ -154,10 +119,28 @@
     text-align: left;
   }
   .tagline {
-    font-size: clamp(2.1rem, 5.8vw, 5.2rem); font-weight: 400;
-    line-height: 1.0; letter-spacing: -0.025em; color: var(--ink);
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 4.4vw, 3.9rem); font-weight: 400;
+    line-height: 1.05; letter-spacing: -0.015em; color: var(--ink);
   }
   .tagline .accent { color: var(--teal); }
+
+  /* "Start a Project" beneath the headline (trionn-style masked reveal) */
+  .start-project {
+    display: inline-flex; align-items: baseline; gap: 0.6rem;
+    margin-top: 2rem;
+    font-family: var(--font-grot); font-size: 0.92rem; font-weight: 600;
+    letter-spacing: 0.01em; color: var(--ink);
+  }
+  .start-project .sp-arrow { color: var(--teal); font-size: 0.85em; }
+  .start-project .sp-line {
+    position: relative; padding-bottom: 3px;
+    background: linear-gradient(var(--teal), var(--teal)) no-repeat left bottom / 0 1px;
+    transition: background-size 0.4s var(--ease-out), color 0.3s ease;
+  }
+  .start-project:hover .sp-line { background-size: 100% 1px; color: var(--teal); }
+  .start-project:hover .sp-arrow { transform: translateX(3px); }
+  .start-project .sp-arrow { transition: transform 0.3s var(--ease-out); }
 
   /* bottom-left circular scroll cue */
   .scroll-orb {
@@ -169,6 +152,17 @@
     transition: border-color 0.3s ease, color 0.3s ease;
   }
   .scroll-orb:hover { border-color: var(--ink); color: var(--ink); }
+
+  /* bottom-right hero caption (balances the scroll orb) */
+  .hero-note {
+    position: absolute; right: 2.25rem; bottom: 3rem;
+    text-align: right;
+    font-family: var(--font-grot); font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.9;
+    color: var(--ink-dim);
+  }
+  .hero-note .note-strong { color: var(--ink); }
+  .hero-note .tick { color: var(--teal); }
 
   /* Staggered reveal */
   .rv { display: inline-block; overflow: hidden; vertical-align: bottom; }
@@ -197,8 +191,9 @@
   .statement {
     position: absolute; left: clamp(2.25rem, 13vw, 16rem); top: 50%;
     transform: translateY(-50%); max-width: 1080px;
-    font-size: clamp(2rem, 4.6vw, 4.2rem); font-weight: 400;
-    line-height: 1.12; letter-spacing: -0.02em; color: var(--ink);
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 3.9vw, 3.5rem); font-weight: 400;
+    line-height: 1.18; letter-spacing: -0.01em; color: var(--ink);
   }
   .statement .accent { color: var(--teal); }
 
@@ -243,13 +238,146 @@
   }
 
   /* ============================================================
-     FOCUSED VISION  (pin releases into this)
+     SECTION STACK  (trionn mechanic, generalized)
+     Each .pin wraps one sheet: the sheet scrolls in, FREEZES once its
+     bottom edge reaches the viewport bottom (JS sets the negative sticky
+     top for sheets taller than the screen), then holds stuck for one
+     extra viewport (the ::after spacer) while the NEXT sheet — pulled up
+     by -100svh — slides up OVER it. Same move as the hero -> Key Facts
+     arrival, chained down the page.
+     ============================================================ */
+  .pin { position: relative; }
+  .pin > section { position: sticky; top: 0; }
+  /* 200svh hold: one viewport where the frozen sheet gets covered by the
+     bars, then one where the next sheet slides in over the finished cover.
+     (Only -100svh is pulled back up, so each transition owns 2 viewports
+     of scroll and consecutive wipes never overlap.) */
+  .pin::after { content: ""; display: block; height: 200svh; }
+  .intro + .pin, .pin + .pin, .pin + .work { margin-top: -100svh; }
+
+  /* ---- trionn stepped wipe ----
+     Each transition has a FIXED full-viewport stack of bars (.wipe) sitting
+     between the old sheet and the new one. Over ~2 viewports of scroll the
+     bars grow ONE AFTER ANOTHER, bottom-up, until the screen is solid —
+     the old section is buried — and only then does the next sheet's content
+     slide in over the finished cover (same color, so the edge is invisible:
+     pure reveal). JS drives each bar's --s and toggles visibility. */
+  .wipe {
+    position: fixed; inset: 0; pointer-events: none;
+    display: flex; flex-direction: column-reverse;
+    visibility: hidden;
+  }
+  .wipe i {
+    display: block; flex: 1; margin: -1px 0;
+    transform: scaleY(var(--s, 0)); transform-origin: bottom center;
+    background: #edefec;
+  }
+  .wipe-dark i { background: var(--bg-2); }
+  #wipe1 { z-index: 5; } #wipe2 { z-index: 7; } #wipe3 { z-index: 9; }
+  /* the buried sheet sinks away underneath: recedes + dims while covered */
+  .stage, .keyfacts, .focus {
+    transform: scale(calc(1 - var(--bury, 0)));
+  }
+  .stage::after, .keyfacts::after, .focus::after {
+    content: ""; position: absolute; inset: 0; z-index: 22;
+    background: #000; opacity: var(--cover, 0);
+    pointer-events: none;
+  }
+
+  /* ============================================================
+     KEY FACTS  (trionn-style: a sheet that rises over the idle logo;
+     lines unmask, dividers draw, digits roll like odometers in view)
+     ============================================================ */
+  .keyfacts {
+    position: relative; z-index: 6;
+    /* trionn's white-arrival moment: the sheet that rises over the dark hero
+       is LIGHT — everything inside reads from these re-scoped vars */
+    --ink: #101312;
+    --ink-dim: rgba(16, 19, 18, 0.58);
+    --ink-faint: rgba(16, 19, 18, 0.32);
+    --line: rgba(16, 19, 18, 0.14);
+    --teal: #00978d;
+    background: #edefec;
+    padding: clamp(4.5rem, 8vw, 7.5rem) 2.25rem clamp(3.5rem, 6vw, 5.5rem);
+    color: var(--ink);
+  }
+  .kf-head {
+    display: flex; flex-wrap: wrap; align-items: flex-end;
+    justify-content: space-between; gap: 1.5rem 3rem;
+    margin-bottom: clamp(3rem, 6vw, 5.5rem);
+  }
+  .kf-label {
+    font-family: var(--font-grot); font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink);
+  }
+  .kf-label .tick { color: var(--teal); }
+  .kf-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4.6vw, 4rem); font-weight: 400;
+    line-height: 1.06; letter-spacing: -0.015em;
+  }
+  .kf-title .accent { color: var(--teal); font-style: italic; }
+
+  /* masked line reveal — armed per-block when it scrolls into view */
+  .krv { display: block; overflow: hidden; }
+  .krv > * {
+    display: block; transform: translateY(115%);
+    transition: transform 1.05s var(--ease-inout);
+    transition-delay: var(--d, 0s);
+  }
+  .kf-anim.in .krv > * { transform: translateY(0); }
+
+  .kf-rows { border-bottom: 1px solid var(--line); }
+  .kf-row {
+    position: relative;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 1.5rem 3rem; flex-wrap: wrap;
+    padding: clamp(1.6rem, 3vw, 2.6rem) 0;
+  }
+  .kf-row::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: var(--line);
+    transform: scaleX(0); transform-origin: left center;
+    transition: transform 1.25s var(--ease-inout) 0.1s;
+  }
+  .kf-row.in::before { transform: scaleX(1); }
+  .kf-num {
+    display: inline-flex; align-items: flex-start;
+    font-family: var(--font-grot); font-weight: 600;
+    font-size: clamp(3.6rem, 10vw, 8.6rem);
+    line-height: 1; letter-spacing: -0.03em; color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .kf-digit { display: block; height: 1em; overflow: hidden; }
+  .kf-reel { display: block; }
+  .kf-reel span { display: block; height: 1em; line-height: 1; }
+  .kf-suffix {
+    font-size: 0.42em; line-height: 1; padding-top: 0.14em; margin-left: 0.08em;
+    color: var(--teal);
+  }
+  .kf-cap {
+    max-width: 34ch; text-align: right;
+    font-size: clamp(0.9rem, 1.4vw, 1.05rem); line-height: 1.5; color: var(--ink-dim);
+    opacity: 0; transform: translateY(18px);
+    transition: opacity 0.9s ease 0.3s, transform 0.9s var(--ease-out) 0.3s;
+  }
+  .kf-row.in .kf-cap { opacity: 1; transform: none; }
+  .kf-strip {
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--ink-dim);
+  }
+  .kf-strip .tick { color: var(--teal); }
+
+  /* ============================================================
+     FOCUSED VISION
      ============================================================ */
   .focus {
-    position: relative; z-index: 2;
-    min-height: 92svh; display: flex; align-items: center;
+    position: relative; z-index: 8;
+    /* full viewport: while it slides over the frozen Key Facts sheet it must
+       cover the whole screen, exactly like Key Facts covers the hero */
+    min-height: 100svh; display: flex; align-items: center;
     padding: 8rem 2rem; background: var(--bg-2); color: var(--ink);
-    border-top: 1px solid var(--line);
   }
   .focus-inner { max-width: min(92vw, 900px); }
   .focus-idx {
@@ -271,7 +399,8 @@
      WORK
      ============================================================ */
   .work {
-    position: relative; z-index: 2;
+    position: relative; z-index: 10;
+    min-height: 100svh;
     padding: 9rem 2rem 7rem; background: var(--bg-2); color: var(--ink);
   }
   .work-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3.5rem; }
@@ -299,19 +428,30 @@
   @media (max-width: 640px) {
     .hero-center { top: 5.5rem; left: 1.2rem; right: 1.2rem; }
     .scroll-orb { left: 1.2rem; bottom: 2rem; }
+    .hero-note { right: 1.2rem; bottom: 2.1rem; font-size: 0.62rem; }
     .col-mission { right: auto; left: 2.25rem; top: 14rem; }
     .statement { left: 1.2rem; right: 1.2rem; }
     .edge-label { display: none; }
-    .pre-count { right: 1rem; }
+    .keyfacts { padding-left: 1.2rem; padding-right: 1.2rem; }
+    .kf-cap { text-align: left; }
   }
   @media (prefers-reduced-motion: reduce) {
     .rv > * { transform: none !important; transition: none !important; }
     .intro { height: auto; }
     .stage { position: relative; }
+    .pin > section { position: static; }
+    .pin::after { display: none; }
+    .intro + .pin, .pin + .pin, .pin + .work { margin-top: 0; }
+    .wipe { display: none; }
+    .stage, .keyfacts, .focus { transform: none !important; }
+    .stage::after, .keyfacts::after, .focus::after { display: none; }
+    .krv > *, .kf-cap { transform: none !important; transition: none !important; opacity: 1 !important; }
+    .kf-row::before { transform: none !important; transition: none !important; }
+    .kf-reel { transition: none !important; }
   }
 </style>
 </head>
-<body class="locked">
+<body>
 
 <!-- Reusable mark: exact Prception logo geometry -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -324,25 +464,12 @@
   </defs>
 </svg>
 
-<!-- ================= PRELOADER ================= -->
-<div id="preloader" aria-hidden="true">
-  <span class="pre-corner tl">Prception&reg;</span>
-  <span class="pre-corner tr">Creative Studio</span>
-  <span class="pre-corner bl">Loading Experience</span>
-
-  <div class="pre-logo">
-    <svg viewBox="0 0 166 210">
-      <defs>
-        <clipPath id="fillClip"><rect id="fillRect" x="-10" y="210" width="186" height="230" /></clipPath>
-      </defs>
-      <g opacity="0.12"><use href="#prception-mark" /></g>
-      <g clip-path="url(#fillClip)"><use href="#prception-mark" /></g>
-    </svg>
-  </div>
-
-  <div class="pre-count"><span id="count">0</span><sup>%</sup></div>
-</div>
-<noscript><style>#preloader { display: none; } body.locked { overflow: auto; }</style></noscript>
+<noscript><style>
+  body.locked { overflow: auto; }
+  .pin > section { position: static; }
+  .pin::after { display: none; }
+  .intro + .pin, .pin + .pin, .pin + .work { margin-top: 0; }
+</style></noscript>
 
 <!-- ================= FULLSCREEN MENU ================= -->
 <div class="menu-overlay" id="menuOverlay">
@@ -369,9 +496,20 @@
           <span class="rv" style="--d:0.35s"><span>Shaping how the</span></span><br />
           <span class="rv" style="--d:0.45s"><span>world <span class="accent">perceives</span>.</span></span>
         </h1>
+
+        <!-- CTA beneath the headline with trionn-style masked line reveal -->
+        <a class="start-project" href="#work">
+          <span class="rv" style="--d:0.6s"><span class="sp-line">Start a Project</span></span>
+          <span class="rv" style="--d:0.7s"><span class="sp-arrow">&rarr;</span></span>
+        </a>
       </div>
 
-      <a class="scroll-orb" href="#focus" aria-label="Scroll down">&darr;</a>
+      <a class="scroll-orb" href="#keyfacts" aria-label="Scroll down">&darr;</a>
+
+      <div class="hero-note">
+        <span class="rv" style="--d:0.8s"><span><span class="tick">&#10022;</span> Independent creative studio</span></span><br />
+        <span class="rv" style="--d:0.9s"><span class="note-strong">Strategy &middot; Design &middot; Technology</span></span>
+      </div>
     </div>
 
     <!-- Scroll BEATS: cross-fade over the animating logo, tied to scroll progress.
@@ -380,13 +518,13 @@
       <!-- one expand→rejoin arc: beats cross-fade along it, the last landing as
            the logo re-joins into the Focused Vision handoff -->
       <!-- 01 — about statement -->
-      <div class="beat" data-in="0.10" data-out="0.38">
+      <div class="beat" data-in="0.07" data-out="0.27">
         <span class="edge-label">About</span>
         <p class="statement">Prception is an independent creative studio shaping how the world <span class="accent">perceives</span> brands — through strategy, design, and technology.</p>
       </div>
 
       <!-- 02 — two-column mission -->
-      <div class="beat" data-in="0.42" data-out="0.66">
+      <div class="beat" data-in="0.30" data-out="0.47">
         <div class="col-caps">We design for perception<br />clarity first, craft always,<br />built to last.</div>
         <div class="col-mission">
           <p>We make technology feel human — intuitive, purposeful, and meaningful to the people it reaches.</p>
@@ -395,7 +533,7 @@
       </div>
 
       <!-- 03 — giant marquee + outcome -->
-      <div class="beat" data-in="0.56" data-out="1.0">
+      <div class="beat" data-in="0.40" data-out="0.71">
         <div class="col-caps">Focused vision.<br />Measured execution.</div>
         <div class="marquee" aria-hidden="true">
           <div class="marquee-track">
@@ -421,7 +559,44 @@
   </div>
 </section>
 
-<!-- ================= FOCUSED VISION (pin releases here) ================= -->
+<!-- ================= KEY FACTS (rises over the idle logo, trionn-style) ================= -->
+<div class="pin">
+<section class="keyfacts" id="keyfacts">
+  <div class="kf-head kf-anim">
+    <span class="kf-label"><span class="tick">&#10022;</span> Key Facts</span>
+    <h2 class="kf-title">
+      <span class="krv"><span>A snapshot of our</span></span>
+      <span class="krv" style="--d:0.12s"><span>experience &amp; <span class="accent">impact</span>.</span></span>
+    </h2>
+  </div>
+
+  <div class="kf-rows">
+    <div class="kf-row kf-anim">
+      <span class="kf-num" data-num="050" data-suffix="+"></span>
+      <p class="kf-cap">Projects completed across brand, motion &amp; interactive.</p>
+    </div>
+    <div class="kf-row kf-anim">
+      <span class="kf-num" data-num="015" data-suffix="+"></span>
+      <p class="kf-cap">Creative minds across strategy, design &amp; technology.</p>
+    </div>
+    <div class="kf-row kf-anim">
+      <span class="kf-num" data-num="020" data-suffix="+"></span>
+      <p class="kf-cap">Business partners who trust us worldwide.</p>
+    </div>
+    <div class="kf-row kf-anim">
+      <span class="kf-num" data-num="90" data-suffix="%"></span>
+      <p class="kf-cap">Of our clients return to us for a second project.</p>
+    </div>
+  </div>
+
+  <div class="kf-strip kf-anim">
+    <span class="krv"><span><span class="tick">&#10022;</span> Featured on top design platforms worldwide</span></span>
+  </div>
+</section>
+</div>
+
+<!-- ================= FOCUSED VISION (slides over the stuck Key Facts sheet) ================= -->
+<div class="pin">
 <section class="focus" id="focus">
   <div class="focus-inner">
     <span class="focus-idx">Approach</span>
@@ -429,6 +604,7 @@
     <p class="focus-sub">From idea to outcome — every decision made with intent.</p>
   </div>
 </section>
+</div>
 
 <!-- ================= WORK ================= -->
 <section class="work" id="work">
@@ -449,6 +625,11 @@
   <span>Made with perception</span>
 </footer>
 
+<!-- stepped wipes: fixed bar stacks that cover each section before the next reveals -->
+<div class="wipe" id="wipe1" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="wipe wipe-dark" id="wipe2" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="wipe wipe-dark" id="wipe3" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
 <!-- ============ 3D glass logo (Three.js) ============ -->
 <script type="importmap">
 {
@@ -460,10 +641,6 @@
 </script>
 <script type="module">
 import * as THREE from "three";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import { Line2 } from "three/addons/lines/Line2.js";
-import { LineMaterial } from "three/addons/lines/LineMaterial.js";
-import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 
 const mount = document.getElementById("sign");
 let renderer;
@@ -480,13 +657,44 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.1, 100);
 camera.position.set(0, 0, 7.2);
 
+// ---- custom studio environment (trionn-style reflection sweep) ----
+// Instead of the generic grey RoomEnvironment, the glass reflects a dark
+// studio with a few HOT light panels — a big teal softbox (brand teal from
+// prception.in, #018f87 family), a crisp white strip overhead, and a deep
+// teal fill. As the logo rotates, these bright panels sweep across its
+// glossy faces exactly like the orange glow on trionn.com, but in teal.
 const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const envScene = new THREE.Scene();
+{
+  const panel = (hex, intensity, w, h, x, y, z) => {
+    const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(intensity) });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+    mesh.position.set(x, y, z);
+    mesh.lookAt(0, 0, 0);
+    envScene.add(mesh);
+  };
+  // panels are deliberately SMALL and moderate: a small bright source shows
+  // up as a contained streak on one part of the mark at a time (a big panel
+  // washes the whole face in glow)
+  // teal accent, upper-left front — the contained colored streak
+  panel(0x0cd9cc, 4, 3.5, 2.2, -6, 3, 5);
+  // narrow white strip overhead — a thin glossy edge highlight
+  panel(0xffffff, 5.5, 4.5, 0.7, 0, 7, 2.5);
+  // deep brand-teal glint, lower-right — a small catch as it turns past
+  panel(0x018f87, 2.5, 3, 3, 6.5, -2, 3.5);
+  // very faint cool bounce behind, so back faces never go dead black mid-spin
+  panel(0x0a3f3c, 1.4, 10, 8, 0, 0, -7);
+}
+scene.environment = pmrem.fromScene(envScene, 0.04).texture;
 
 // ---- lights ----
-const key = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(-3, 4, 5); scene.add(key);
-const tealRim  = new THREE.PointLight(0x2fe6e0, 9, 14, 2); tealRim.position.set(2.5, -0.5, 2.5); scene.add(tealRim);
-const tealRim2 = new THREE.PointLight(0x18d0ff, 5, 14, 2); tealRim2.position.set(-2.5, 1.5, 2); scene.add(tealRim2);
+// all placed BEHIND or beside the logo: lights in front of polished glass
+// mirror into the camera as sharp white/teal dots. From behind they still
+// pour teal glow around the edges, and the env panels alone carry the soft
+// travelling reflection on the faces.
+const key = new THREE.DirectionalLight(0xffffff, 1.8); key.position.set(-4, 5, -3); scene.add(key);
+const tealRim  = new THREE.PointLight(0x2fe6e0, 9, 14, 2); tealRim.position.set(3.2, -0.8, -1.8); scene.add(tealRim);
+const tealRim2 = new THREE.PointLight(0x18d0ff, 5, 14, 2); tealRim2.position.set(-3, 1.5, -1.5); scene.add(tealRim2);
 scene.add(new THREE.AmbientLight(0xffffff, 0.45));
 
 // ---- EXACT logo geometry ----
@@ -524,9 +732,12 @@ const logoPolys = LOGO_DATA.map((d) => toPoly(d.outer));
 // silhouette, so the inner structure poked out of the skin at the sides
 const extrude = { depth: 0.24, bevelEnabled: false, curveSegments: 40 };
 
+// near-polished surface: low roughness keeps each light panel's reflection a
+// tight, contained streak that lives on one part of the mark at a time and
+// glides as it rotates — rougher would smear it into an all-over glow
 const glass = new THREE.MeshPhysicalMaterial({
-  color: 0x0b1418, metalness: 0.0, roughness: 0.05, transmission: 0.92, thickness: 1.3,
-  ior: 1.5, clearcoat: 1.0, clearcoatRoughness: 0.04, envMapIntensity: 1.5,
+  color: 0x0b1418, metalness: 0.0, roughness: 0.055, transmission: 0.92, thickness: 1.3,
+  ior: 1.5, clearcoat: 1.0, clearcoatRoughness: 0.06, envMapIntensity: 1.7,
   attenuationColor: new THREE.Color(0x0e2a2c), attenuationDistance: 2.4,
 });
 
@@ -565,8 +776,8 @@ for (const g of ringGeos) for (const z of [0, 0.24]) {
 }
 // a faint solid backing so the outline reads as a hollow logo, not floating lines
 const backingMat = new THREE.MeshPhysicalMaterial({
-  color: 0x0a1216, metalness: 0.0, roughness: 0.4, transmission: 0.6,
-  thickness: 0.6, transparent: true, opacity: 0.25,
+  color: 0x0a1216, metalness: 0.0, roughness: 0.25, transmission: 0.6,
+  thickness: 0.6, transparent: true, opacity: 0.25, envMapIntensity: 1.2,
 });
 for (const g of mainGeos) {
   const backing = new THREE.Mesh(g, backingMat);
@@ -799,16 +1010,16 @@ for (const poly of logoPolys) for (let i = 0; i < poly.length; i += 3) arcAnchor
 
 const sparkGroup = new THREE.Group();
 group.add(sparkGroup);
-const arcs = [];    // live bolts: { A, B, lines[core, glow], life, ttl }
-const flecks = [];  // tiny contact sparks at the touch point
-const flash = new THREE.PointLight(0x2fe6e0, 0, 6, 2);
+const arcs = [];    // live bolts: { A, B, branches, lines[core, glow, haze], life, ttl }
+const flash = new THREE.PointLight(0x8f9bff, 0, 6, 2);
 scene.add(flash);
 let flashI = 0;
 
 // fractal midpoint displacement between the two endpoints: each midpoint is
 // pushed sideways IN THE LOGO'S FACE PLANE, so the bolt zig-zags across the
 // surface (only a hair of z jitter, to hover just off the glass)
-const BOLT_PTS = 17;
+const BOLT_PTS = 33;
+const BRANCH_PTS = 13;
 function displace(pts, i0, i1, amp) {
   if (i1 - i0 < 2) return;
   const im = (i0 + i1) >> 1;
@@ -824,83 +1035,126 @@ function displace(pts, i0, i1, amp) {
   displace(pts, i0, im, amp);
   displace(pts, im, i1, amp);
 }
-function regenArc(s) {
-  for (const line of s.lines) {
-    const pts = new Array(BOLT_PTS);
-    pts[0] = s.A;
-    pts[BOLT_PTS - 1] = s.B;
-    displace(pts, 0, BOLT_PTS - 1, 0.13);
-    const flat = new Float32Array(BOLT_PTS * 3);
-    for (let i = 0; i < BOLT_PTS; i++) {
-      flat[i * 3] = pts[i].x; flat[i * 3 + 1] = pts[i].y; flat[i * 3 + 2] = pts[i].z;
-    }
-    line.geometry.setPositions(flat);
-  }
+function makePath(A, B, n, amp) {
+  const pts = new Array(n);
+  pts[0] = A; pts[n - 1] = B;
+  displace(pts, 0, n - 1, amp);
+  return pts;
 }
-// fat screen-space lines (Line2): LineBasicMaterial linewidth is ignored on
-// most GPUs, so real thickness needs the addons line renderer
-function makeArcLine(color, opacity, width, additive) {
-  const geo = new LineGeometry();
-  geo.setPositions(new Float32Array(BOLT_PTS * 3));
-  const mat = new LineMaterial({
-    color, transparent: true, opacity, linewidth: width,
-    // the fat aura uses normal blending: additive doubles up where the line
-    // segments overlap at each joint, which reads as a string of bright beads
-    blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+
+// Bolts are drawn as tapered ribbons (one continuous triangle strip with
+// averaged joint normals) instead of fat screen-space lines: Line2 overlaps
+// a round cap at every joint, which through transparency reads as a string
+// of bright dots along the bolt. A ribbon is seamless — no beads — and it
+// tapers from a hot thick root to a hair-thin tip like a real discharge.
+function ribbonInto(arr, o, pts, w0, w1) {
+  const n = pts.length;
+  const L = new Float32Array(n * 3), R = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const a = pts[Math.max(i - 1, 0)], b = pts[Math.min(i + 1, n - 1)];
+    let nx = a.y - b.y, ny = b.x - a.x;
+    const l = Math.hypot(nx, ny) || 1e-6;
+    const w = w0 + (w1 - w0) * (i / (n - 1));
+    nx = (nx / l) * w; ny = (ny / l) * w;
+    L[i * 3] = pts[i].x + nx; L[i * 3 + 1] = pts[i].y + ny; L[i * 3 + 2] = pts[i].z;
+    R[i * 3] = pts[i].x - nx; R[i * 3 + 1] = pts[i].y - ny; R[i * 3 + 2] = pts[i].z;
+  }
+  for (let i = 0; i < n - 1; i++) {
+    const p = i * 3, q = (i + 1) * 3;
+    arr[o++] = L[p]; arr[o++] = L[p + 1]; arr[o++] = L[p + 2];
+    arr[o++] = R[p]; arr[o++] = R[p + 1]; arr[o++] = R[p + 2];
+    arr[o++] = L[q]; arr[o++] = L[q + 1]; arr[o++] = L[q + 2];
+    arr[o++] = R[p]; arr[o++] = R[p + 1]; arr[o++] = R[p + 2];
+    arr[o++] = R[q]; arr[o++] = R[q + 1]; arr[o++] = R[q + 2];
+    arr[o++] = L[q]; arr[o++] = L[q + 1]; arr[o++] = L[q + 2];
+  }
+  return o;
+}
+
+// half-widths per layer, in logo-local units: [main root, main tip], branches
+// fork off thinner and dimmer than the channel they leave
+const BOLT_W = [
+  { main: [0.006, 0.0012], br: [0.003, 0.0008] }, // white-hot core
+  { main: [0.020, 0.004], br: [0.009, 0.002] },   // fluorescent blue glow
+  { main: [0.048, 0.011], br: [0.021, 0.005] },   // wide violet haze
+];
+function regenArc(s) {
+  const main = makePath(s.A, s.B, BOLT_PTS, 0.16);
+  const dist = Math.hypot(s.B.x - s.A.x, s.B.y - s.A.y);
+  const branchPaths = [];
+  for (const br of s.branches) {
+    // fork off the freshly jittered main channel, continuing roughly in its
+    // direction but kicked sideways — the classic downward-fork silhouette
+    const i = Math.round(br.t * (BOLT_PTS - 1));
+    const p = main[i], q = main[Math.min(i + 2, BOLT_PTS - 1)];
+    let dx = q.x - p.x, dy = q.y - p.y;
+    const dl = Math.hypot(dx, dy) || 1e-6;
+    const cos = Math.cos(br.ang), sin = Math.sin(br.ang);
+    const ux = (dx * cos - dy * sin) / dl, uy = (dx * sin + dy * cos) / dl;
+    const len = dist * br.frac;
+    const end = { x: p.x + ux * len, y: p.y + uy * len, z: p.z };
+    branchPaths.push(makePath(p, end, BRANCH_PTS, 0.2));
+  }
+  s.lines.forEach((mesh, li) => {
+    const arr = mesh.geometry.attributes.position.array;
+    let o = ribbonInto(arr, 0, main, BOLT_W[li].main[0], BOLT_W[li].main[1]);
+    for (const bp of branchPaths) o = ribbonInto(arr, o, bp, BOLT_W[li].br[0], BOLT_W[li].br[1]);
+    mesh.geometry.attributes.position.needsUpdate = true;
+    mesh.geometry.setDrawRange(0, o / 3);
+  });
+}
+function makeBoltMesh(color, opacity, verts) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(verts * 3), 3));
+  const mat = new THREE.MeshBasicMaterial({
+    color, transparent: true, opacity,
+    blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     depthWrite: false, depthTest: false,
   });
-  mat.resolution.set(innerWidth, innerHeight);
-  const line = new Line2(geo, mat);
-  line.frustumCulled = false;
-  line.renderOrder = 999; // arcs glow over the glass, never sunk into it
-  return line;
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 999; // arcs glow over the glass, never sunk into it
+  return mesh;
 }
 
 function spawnArc(hitWorld, big) {
   const local = group.worldToLocal(hitWorld.clone());
-  const n = big ? 4 : 1 + (Math.random() < 0.3 ? 1 : 0);
+  const n = big ? 3 : 1 + (Math.random() < 0.3 ? 1 : 0);
   for (let k = 0; k < n; k++) {
-    if (arcs.length > 24) break; // safety cap
-    // pick a contour point a small-to-medium stretch away: the bolt bridges
-    // the gap from where you touch to that edge of the logo
-    const minD = 0.3, maxD = big ? 1.8 : 1.1;
+    if (arcs.length > 18) break; // safety cap
+    // reach for the NEAREST contour points — short little arcs that just
+    // bridge from the touch point to a nearby edge, like a small connection
+    const minD = 0.12, maxD = big ? 0.85 : 0.6;
     const cands = arcAnchors.filter((a) => {
       const d = Math.hypot(a.x - local.x, a.y - local.y);
       return d > minD && d < maxD;
     });
     if (!cands.length) break;
-    const target = cands[(Math.random() * cands.length) | 0];
+    // bias the pick toward the closest candidates so strikes stay short
+    cands.sort((a, b) =>
+      (Math.hypot(a.x - local.x, a.y - local.y)) - (Math.hypot(b.x - local.x, b.y - local.y)));
+    const target = cands[(Math.random() * Math.random() * cands.length) | 0];
     const A = { x: local.x, y: local.y, z: local.z };
     const B = { x: target.x, y: target.y, z: local.z + (Math.random() - 0.5) * 0.05 };
-    // thick teal core + a wider soft teal aura with its own jitter —
-    // both in the same teal as the logo's rim lighting
-    const core = makeArcLine(0x2fe6e0, 1, 3.5, false);
-    const glow = makeArcLine(0x2fe6e0, 0.22, 8, false);
-    sparkGroup.add(core, glow);
-    const s = { A, B, lines: [core, glow], life: 0, ttl: (big ? 0.2 : 0.12) + Math.random() * 0.08 };
+    // short arcs fork sparingly: one or two small twigs off the main channel
+    const nb = big ? 2 : 1;
+    const branches = [];
+    for (let j = 0; j < nb; j++) branches.push({
+      t: 0.25 + Math.random() * 0.5,
+      frac: 0.18 + Math.random() * 0.22,
+      ang: (Math.random() < 0.5 ? -1 : 1) * (0.35 + Math.random() * 0.55),
+    });
+    const verts = (BOLT_PTS - 1 + nb * (BRANCH_PTS - 1)) * 6;
+    // white-hot core wrapped in fluorescent blue, fading out through the
+    // violet storm-haze — the colour stack of a real discharge
+    const core = makeBoltMesh(0xf2f6ff, 1, verts);
+    const glow = makeBoltMesh(0x7d8fff, 0.55, verts);
+    const haze = makeBoltMesh(0x6a5df0, 0.2, verts);
+    sparkGroup.add(haze, glow, core);
+    const s = { A, B, branches, lines: [core, glow, haze], life: 0, ttl: (big ? 0.3 : 0.18) + Math.random() * 0.1 };
     regenArc(s);
     arcs.push(s);
   }
-  // a pinch of tiny contact sparks right at the touch point (stays local)
-  const nF = big ? 8 : 3;
-  const fPos = new Float32Array(nF * 3);
-  const vel = [];
-  for (let i = 0; i < nF; i++) {
-    fPos[i * 3] = local.x; fPos[i * 3 + 1] = local.y; fPos[i * 3 + 2] = local.z;
-    const a = Math.random() * Math.PI * 2;
-    vel.push({ x: Math.cos(a) * (0.4 + Math.random() * 0.7), y: Math.sin(a) * (0.4 + Math.random() * 0.7), z: (Math.random() - 0.5) * 0.3 });
-  }
-  const fGeo = new THREE.BufferGeometry();
-  fGeo.setAttribute("position", new THREE.BufferAttribute(fPos, 3));
-  const fMat = new THREE.PointsMaterial({
-    color: 0x2fe6e0, size: 0.03, transparent: true, opacity: 1,
-    blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false,
-  });
-  const ptsObj = new THREE.Points(fGeo, fMat);
-  ptsObj.frustumCulled = false;
-  ptsObj.renderOrder = 999;
-  sparkGroup.add(ptsObj);
-  flecks.push({ pts: ptsObj, mat: fMat, vel, life: 0, ttl: 0.2 + Math.random() * 0.12 });
   flash.position.copy(hitWorld);
   flashI = Math.max(flashI, big ? 9 : 4);
 }
@@ -912,7 +1166,10 @@ function chainVisible(o) {
 }
 
 function updateSparks(dt) {
-  if (pointerSeen) {
+  // lightning is a hero-only flourish: once the page has scrolled past the
+  // opening of the first section, hover no longer strikes (existing bolts
+  // still fade out on their own below)
+  if (pointerSeen && window.__inHero !== false) {
     raycaster.setFromCamera(pointerNDC, camera);
     const hit = raycaster.intersectObjects(sparkTargets, false).find((h) => chainVisible(h.object));
     if (hit) {
@@ -936,26 +1193,9 @@ function updateSparks(dt) {
     // the bolt re-forks every few frames and flickers as it dies — the
     // path itself dances, like a real arc hunting for ground
     if (Math.random() < 0.6) regenArc(s);
-    s.lines[0].material.opacity = k * (0.65 + Math.random() * 0.35);
-    s.lines[1].material.opacity = 0.3 * k;
-  }
-  for (let i = flecks.length - 1; i >= 0; i--) {
-    const f = flecks[i];
-    f.life += dt;
-    const k = 1 - f.life / f.ttl;
-    if (k <= 0) {
-      sparkGroup.remove(f.pts); f.pts.geometry.dispose(); f.mat.dispose();
-      flecks.splice(i, 1);
-    } else {
-      const pos = f.pts.geometry.attributes.position;
-      for (let j = 0; j < f.vel.length; j++) {
-        pos.array[j * 3] += f.vel[j].x * dt;
-        pos.array[j * 3 + 1] += (f.vel[j].y - f.life * 1.5) * dt; // slight fall
-        pos.array[j * 3 + 2] += f.vel[j].z * dt;
-      }
-      pos.needsUpdate = true;
-      f.mat.opacity = k;
-    }
+    s.lines[0].material.opacity = k * (0.7 + Math.random() * 0.3);
+    s.lines[1].material.opacity = 0.55 * k;
+    s.lines[2].material.opacity = 0.2 * k;
   }
   flashI *= 0.82;
   flash.intensity = flashI;
@@ -1011,11 +1251,13 @@ function animate() {
   const panX = window.__signPanX || 0;
   const panY = window.__signPanY || 0;
   const spin = window.__signSpin || 0;
-  // idle: a slow, clearly visible auto-sway centred on the straight-on front
-  // view — the logo keeps gently turning on its own even with no scroll or
-  // mouse, but always swings back to face front; scroll adds the real spin
-  outer.rotation.y = mx * 0.5 + Math.sin(t * 0.3) * 0.35 + spin;
-  outer.rotation.x = 0.05 + my * 0.3 + Math.cos(t * 0.5) * 0.06;
+  // idle: a constant SLOW auto-rotation — the logo is always turning on its
+  // own (one full turn ≈ 50 s), so the reflections keep gliding across it
+  // even with no scroll or mouse; scroll adds the real spin on top
+  // mouse influence kept very light: a faint tilt toward the pointer, never
+  // an obvious swing — the slow auto-rotation stays the dominant motion
+  outer.rotation.y = mx * 0.1 + t * 0.21 + spin;
+  outer.rotation.x = 0.05 + my * 0.06 + Math.cos(t * 0.22) * 0.05;
   outer.position.x = panX;
   outer.position.y = panY + Math.sin(t * 0.7) * 0.06;
   // ease the shatter toward its scroll-driven target (soft, trionn-like)
@@ -1055,9 +1297,6 @@ animate();
 <!-- ============ Panels + preloader + scroll ============ -->
 <script>
 (function () {
-  const preloader = document.getElementById("preloader");
-  const countEl = document.getElementById("count");
-  const fillRect = document.getElementById("fillRect");
   const stageUi = document.getElementById("stageUi");
   const intro = document.getElementById("intro");
   const body = document.body;
@@ -1097,32 +1336,53 @@ animate();
     outP: parseFloat(el.dataset.out),
   }));
 
+  // extra sticky-hold at the end of .intro, excluded from p's range. Must be
+  // >= the wipe's own 2-viewport climb (see .wipe script) so the Key Facts
+  // sheet never docks before its cover has finished stepping in.
+  const DWELL_VH = 138;
+  // the freeze/dwell now lands at the OLD p=0.71 mark (marquee beat 3 just
+  // finished, logo already whole/dropped/spun-still) instead of p=1 — so the
+  // dwell holds on "logo alone, centered, idle" instead of several beats of
+  // dead scroll after the last text has already faded. All the beat windows
+  // and wave/drop/spin math below stay expressed as fractions of the OLD
+  // scale, so p is rescaled right after computing it: ACTIVE_END worth of
+  // the old timeline now spans the full 0..1 of the actual scroll range.
+  const ACTIVE_END = 0.71;
   function applyScroll() {
     ticking = false;
-    const range = intro.offsetHeight - innerHeight;
+    const range = (intro.offsetHeight - innerHeight - DWELL_VH * innerHeight / 100) * ACTIVE_END;
     if (range <= 0) return;
     const p = Math.min(Math.max(window.scrollY / range, 0), 1);
+    // hover-lightning only while the hero is on screen (before the skin bursts)
+    window.__inHero = p < 0.10;
+    window.__introP = p;
+    // absolute scrollY where p reaches 1 (logo landed, idle) — the anchor
+    // the Key Facts wipe measures its own start from, so the dwell is real
+    // scroll distance instead of inherited from wherever .pin happens to sit
+    window.__heroLandY = range;
 
     // trionn-style arc: the skin BURSTS apart early, HOLDS scattered while the
-    // text beats travel through, then softly REJOINS — finishing early enough
-    // that the logo sits whole and still through the last beat.
-    const wave = p < 0.16 ? smooth(p / 0.16)                 // burst out
-              : p < 0.45 ? 1                                 // hold scattered
-              : p < 0.72 ? 1 - smooth((p - 0.45) / 0.27)     // soft rejoin
-              : 0;                                           // whole for the last beat + exit
+    // text beats travel through, then softly REJOINS — landing the logo whole
+    // and IDLE by ~51%, so it sits still before the Key Facts sheet (which
+    // starts covering the stage at ~71%) rises over it.
+    const wave = p < 0.11 ? smooth(p / 0.11)                 // burst out
+              : p < 0.32 ? 1                                 // hold scattered
+              : p < 0.51 ? 1 - smooth((p - 0.32) / 0.19)     // soft rejoin
+              : 0;                                           // whole + idle
     window.__logoFan = Math.max(wave, loadBloom);
-    // logo stays centred in the viewport the whole time — one full turn, but
-    // compressed into the first 72% of the run so it lands facing front the
-    // moment the skin rejoins, then sits still through the last beat
+    // trionn landing: as the skin rejoins, the whole logo COMES DOWN the
+    // frame and gets STUCK low — it sits there idle (auto-rotation only)
+    // until the Key Facts sheet slides up and covers it
+    const drop = smooth(Math.min(Math.max((p - 0.36) / 0.24, 0), 1));
     window.__signPanX = 0;
-    window.__signPanY = 0;
-    window.__signSpin = smooth(Math.min(p / 0.72, 1)) * Math.PI * 2;
+    window.__signPanY = -drop * 0.7;
+    window.__signSpin = smooth(Math.min(p / 0.51, 1)) * Math.PI * 2;
     window.__signZoom = 1;
 
     // hero text travels UP and fades as the first beat takes over
-    const heroUp = smooth(Math.min(p / 0.14, 1));
+    const heroUp = smooth(Math.min(p / 0.10, 1));
     stageUi.style.transform = `translateY(${-heroUp * 120}px)`;
-    stageUi.style.opacity = String(Math.max(1 - p * 6, 0));
+    stageUi.style.opacity = String(Math.max(1 - p * 8, 0));
 
     // Each beat physically SCROLLS the full screen height through its window,
     // like a real section passing in front of the fixed 3D canvas: it rises
@@ -1141,10 +1401,8 @@ animate();
       b.el.classList.toggle("on", op > 0.02);
     }
 
-    // near the very end the whole pinned scene lifts away to hand off cleanly
-    const exit = smooth(Math.max((p - 0.9) / 0.1, 0));
-    document.getElementById("sign").style.transform = `translateY(${-exit * 12}vh)`;
-    document.getElementById("beats").style.transform = `translateY(${-exit * 12}vh)`;
+    // the landed logo stays put while the Key Facts sheet slides over it —
+    // trionn's covered sections don't move, they just get buried
   }
   function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(applyScroll); } }
 
@@ -1166,36 +1424,148 @@ animate();
     requestAnimationFrame(step);
   }
 
-  function finish() {
-    preloader.classList.add("done");
-    setTimeout(() => {
-      preloader.classList.add("lift");
-      body.classList.add("revealed");
-      body.classList.remove("locked");
-      bloomTogether();          // logo assembles from its own fanned slabs
-    }, reduced ? 100 : 550);
-    setTimeout(() => { preloader.style.display = "none"; }, 2000);
-  }
-
+  // No preloader: reveal immediately and let the logo assemble from its slabs.
+  body.classList.add("revealed");
+  body.classList.remove("locked");
   if (reduced) {
-    countEl.textContent = "100";
     loadBloom = 0;
     window.__logoFan = 0;
-    finish();
-    return;
+  } else {
+    bloomTogether();          // logo assembles from its own fanned slabs
+  }
+})();
+</script>
+
+<!-- ============ Section stack: each sheet freezes, the next slides over ============ -->
+<script>
+(function () {
+  /* A sheet taller than the viewport must freeze showing its BOTTOM screen
+     (the moment its last line scrolls into view), so its sticky top is
+     (viewport - height), clamped to 0 for sheets that fit on one screen. */
+  const secs = document.querySelectorAll(".pin > section");
+  if (!secs.length) return;
+  const set = () => secs.forEach((s) => {
+    s.style.top = Math.min(0, innerHeight - s.offsetHeight) + "px";
+  });
+  set();
+  addEventListener("resize", set);
+  addEventListener("load", set);
+  if ("ResizeObserver" in window) {
+    const ro = new ResizeObserver(set);
+    secs.forEach((s) => ro.observe(s));
   }
 
-  const DURATION = 2400;
-  const easeInOutCubic = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
-  const start = performance.now();
-  function frame(now) {
-    const x = Math.min((now - start) / DURATION, 1);
-    const e = easeInOutCubic(x);
-    countEl.textContent = Math.round(e * 100);
-    fillRect.setAttribute("y", String(210 - 230 * e));
-    if (x < 1) requestAnimationFrame(frame); else setTimeout(finish, 300);
+  /* ---- trionn stepped wipe: over the ~2 viewports of scroll before a
+     sheet docks, its fixed .wipe bars grow ONE AFTER ANOTHER bottom-up
+     until the screen is a solid cover; the sheet then slides in over that
+     cover (same color — invisible seam) so its content is what "reveals".
+     The buried sheet dims (--cover) and recedes (--bury) as it goes.
+     Everything scrubs with scroll, fully reversible. ---- */
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced) return;
+  const kf = document.getElementById("keyfacts"), fo = document.getElementById("focus"),
+        wk = document.getElementById("work");
+  const pairs = [
+    // track: the in-flow element whose top edge measures the transition
+    // (the .pin wrapper for sticky sheets; work sits in flow itself)
+    { wipe: document.getElementById("wipe1"), sheet: kf, track: kf && kf.parentElement, under: document.querySelector(".stage") },
+    { wipe: document.getElementById("wipe2"), sheet: fo, track: fo && fo.parentElement, under: kf },
+    { wipe: document.getElementById("wipe3"), sheet: wk, track: wk, under: fo },
+  ].filter((p) => p.wipe && p.sheet && p.track && p.under)
+   .map((p) => ({ ...p, bars: Array.from(p.wipe.querySelectorAll("i")) }));
+  const smooth = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+  let ticking = false;
+  function update() {
+    ticking = false;
+    const vh = innerHeight;
+    for (const { wipe, sheet, track, under, bars } of pairs) {
+      let w;
+      if (wipe.id === "wipe1" && window.__heroLandY != null) {
+        // measured from the hero's OWN landing scrollY (not track.top, which
+        // is contaminated by the dwell spacer): 0 right as the logo settles
+        // and freezes, 1 two viewports of further scroll later. This keeps
+        // the wipe fully idle through the dwell, then climbs from a clean
+        // zero — no jump — once the hero is actually still.
+        w = Math.min(Math.max((window.scrollY - window.__heroLandY) / (2 * vh), 0), 1);
+      } else {
+        // w: 0 = two viewports before the sheet docks, 1 = docked.
+        // The bars finish covering by w ≈ 0.57 — right when the sheet's top
+        // edge reaches the fold — so the cover always precedes the content.
+        w = Math.min(Math.max(1 - track.getBoundingClientRect().top / (2 * vh), 0), 1);
+      }
+      bars.forEach((b, k) => {
+        b.style.setProperty("--s", smooth((w - (0.04 + k * 0.08)) / 0.13).toFixed(3));
+      });
+      // once the sheet is docked it covers the viewport itself; hide the
+      // wipe so it can never sit over later content (e.g. the footer)
+      wipe.style.visibility = w > 0.001 && sheet.getBoundingClientRect().top > 0.5 ? "visible" : "hidden";
+      const e = smooth(Math.min(w / 0.57, 1));
+      under.style.setProperty("--cover", (e * 0.6).toFixed(3));
+      under.style.setProperty("--bury", (e * 0.045).toFixed(4));
+    }
   }
-  requestAnimationFrame(frame);
+  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+  addEventListener("scroll", onScroll, { passive: true });
+  addEventListener("resize", onScroll);
+  update();
+})();
+</script>
+
+<!-- ============ Key Facts arrival (masked reveals + odometer digits) ============ -->
+<script>
+(function () {
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* Build the odometer reels: each digit is a window onto a strip of 0–9
+     (two decades, so every digit does at least one full roll). The strip
+     starts on 0 and, when the block enters the viewport, glides down to the
+     target digit in the SECOND decade — the trionn slot-machine count-up. */
+  document.querySelectorAll(".kf-num").forEach((el) => {
+    const raw = el.dataset.num || "";
+    const suffix = el.dataset.suffix || "";
+    el.setAttribute("aria-label", parseInt(raw, 10) + suffix);
+    let di = 0;
+    for (const ch of raw) {
+      if (!/[0-9]/.test(ch)) {
+        const sep = document.createElement("span");
+        sep.textContent = ch; sep.setAttribute("aria-hidden", "true");
+        el.appendChild(sep);
+        continue;
+      }
+      const win = document.createElement("span");
+      win.className = "kf-digit"; win.setAttribute("aria-hidden", "true");
+      const reel = document.createElement("span");
+      reel.className = "kf-reel";
+      let strip = "";
+      for (let k = 0; k < 20; k++) strip += "<span>" + (k % 10) + "</span>";
+      reel.innerHTML = strip;
+      reel.dataset.t = String(10 + +ch);
+      // later digits roll longer and land later — a soft cascading stop
+      if (!reduced) reel.style.transition =
+        "transform " + (1.4 + di * 0.22).toFixed(2) + "s cubic-bezier(0.16, 1, 0.3, 1) " + (di * 0.06).toFixed(2) + "s";
+      win.appendChild(reel);
+      el.appendChild(win);
+      di++;
+    }
+    if (suffix) {
+      const s = document.createElement("span");
+      s.className = "kf-suffix"; s.textContent = suffix;
+      s.setAttribute("aria-hidden", "true");
+      el.appendChild(s);
+    }
+  });
+
+  const roll = (scope) => scope.querySelectorAll(".kf-reel").forEach((r) => {
+    r.style.transform = "translateY(-" + r.dataset.t + "em)";
+  });
+  const arm = (el) => { el.classList.add("in"); roll(el); };
+
+  const targets = document.querySelectorAll(".kf-anim");
+  if (!("IntersectionObserver" in window)) { targets.forEach(arm); return; }
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) if (en.isIntersecting) { arm(en.target); io.unobserve(en.target); }
+  }, { threshold: 0.3, rootMargin: "0px 0px -8% 0px" });
+  targets.forEach((el) => io.observe(el));
 })();
 </script>
 </body>
