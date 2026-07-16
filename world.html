@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prception — The World</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preconnect" href="https://unpkg.com" crossorigin />
+<link rel="modulepreload" href="https://unpkg.com/three@0.160.0/build/three.module.js" />
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400..700&family=Martian+Mono:wght@300..500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 166 210"><path fill="%231FE6DC" fill-rule="evenodd" d="M 62 61 Q 62 55 66.69 58.75 L 114.19 96.75 Q 122 103 115.44 110.55 L 85.94 144.47 Q 82 149 82 155 L 82 168 Q 82 175 75 175 L 69 175 Q 62 175 62 168 L 62 141 Q 62 135 66.24 130.76 L 89.05 107.95 Q 94 103 88.73 98.39 L 66.52 78.95 Q 62 75 62 69 Z M 74 79 Q 74 75 76.83 77.83 L 98.46 99.46 Q 102 103 98.46 106.54 L 76.83 128.17 Q 74 131 74 127 Z"/></svg>' />
+<style>
+  :root {
+    --bg: #020707;
+    --ink: #d8e6e4;
+    --ink-dim: rgba(216, 230, 228, 0.55);
+    --teal: #1fe6dc;
+    --font-grot: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "Martian Mono", "Courier New", monospace;
+    --font-display: "Instrument Serif", "Times New Roman", Georgia, serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--bg); color: var(--ink);
+    font-family: var(--font-grot);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--teal); color: var(--bg); }
+
+  /* scroll budget: the sticky stage holds one frozen viewport while ~330vh of
+     scroll scrubs the orb's arrival (progress p is measured off this track) */
+  .track { height: 430vh; position: relative; }
+  .stage {
+    position: sticky; top: 0;
+    height: 100svh; min-height: 480px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .stage canvas { display: block; width: 100%; height: 100%; }
+  #worldMount { position: absolute; inset: 0; }
+
+  .site-header {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.4rem 2rem;
+    font-family: var(--font-mono); font-size: 0.68rem;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  .site-header .brand { color: var(--ink); font-weight: 500; }
+  .site-header a:hover { color: var(--teal); }
+
+  .hint {
+    position: absolute; left: 50%; bottom: 2rem; z-index: 10;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+    font-family: var(--font-mono); font-size: 0.62rem;
+    letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink-dim);
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+  }
+  .hint i {
+    display: block; width: 1px; height: 44px;
+    background: linear-gradient(to bottom, transparent, var(--teal));
+    animation: drip 2.2s ease-in-out infinite;
+  }
+  @keyframes drip { 0% { transform: scaleY(0); transform-origin: top; } 55% { transform: scaleY(1); transform-origin: top; } 56% { transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
+
+  /* headline that fades in once the orb has settled — high in frame,
+     riding beside the blob like the reference */
+  .headline {
+    position: absolute; left: 50%; top: 25vh; z-index: 10;
+    transform: translate(-50%, 24px); text-align: center;
+    opacity: 0; transition: opacity 1.1s ease, transform 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+  }
+  .headline.on { opacity: 1; transform: translate(-50%, 0); }
+  .headline h1 {
+    font-family: var(--font-grot); font-weight: 700;
+    text-transform: uppercase; line-height: 0.95;
+    font-size: clamp(2.4rem, 5vw, 4.4rem); letter-spacing: -0.005em;
+    color: #f2fbfa;
+    text-shadow: 0 3px 34px rgba(2, 12, 11, 0.75), 0 0 60px rgba(31, 230, 220, 0.25);
+  }
+  .headline h1 em { font-style: normal; color: var(--teal); }
+  .headline p {
+    margin-top: 0.9rem;
+    font-family: var(--font-mono); font-size: 0.64rem;
+    letter-spacing: 0.28em; text-transform: uppercase; color: var(--ink-dim);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hint { display: none; }
+    .headline { opacity: 1; transform: translate(-50%, 0); transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="track" id="track">
+  <div class="stage">
+    <div id="worldMount"></div>
+    <header class="site-header">
+      <a class="brand" href="index.html">Prception&reg;</a>
+      <span>The World — 001</span>
+    </header>
+    <div class="hint" id="hint"><span>Scroll</span><i></i></div>
+    <div class="headline" id="headline">
+      <h1>Perception is <em>liquid</em></h1>
+      <p>Prception — Creative Studio</p>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+// NOTE: no THREE.Reflector and no MeshPhysicalMaterial transmission anywhere —
+// both do a render-to-texture pass mid-frame, which blacks out the whole
+// composer output on this machine's ANGLE/D3D11 driver. The chrome orb gets
+// its reflections from a prebaked PMREM environment instead (no per-frame RTT).
+
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const clamp01 = (v) => Math.min(Math.max(v, 0), 1);
+const smooth = (a, b, v) => { const t = clamp01((v - a) / (b - a)); return t * t * (3 - 2 * t); };
+const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+const lerp = (a, b, t) => a + (b - a) * t;
+
+const mount = document.getElementById("worldMount");
+let renderer;
+try {
+  // no MSAA: the scene renders into the composer's offscreen target, so a
+  // multisampled canvas adds memory pressure without smoothing anything
+  renderer = new THREE.WebGLRenderer({ antialias: false });
+} catch (e) { mount.style.display = "none"; throw e; }
+// capped low: bloom + 70k verts at high DPR strains integrated GPUs into
+// dropped (black) frames; 1.25 is visually identical at viewing distance
+const DPR = Math.min(devicePixelRatio, 1.25);
+renderer.setPixelRatio(DPR);
+renderer.setSize(innerWidth, innerHeight);
+mount.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x031010);
+// heavy luminous haze — the world lives in glowing air like the reference
+scene.fog = new THREE.FogExp2(0x07302c, 0.0105);
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 800);
+// elevated vantage, held nearly level — sky takes almost half the frame,
+// the plain sweeps out to distant mesas below
+const CAM_BASE = new THREE.Vector3(0, 7.5, 16);
+camera.position.copy(CAM_BASE);
+
+/* ============================================================
+   Shared GLSL: simplex noise + fbm (Ashima), used by sky + orb
+   ============================================================ */
+const NOISE_GLSL = /* glsl */`
+vec3 mod289(vec3 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
+vec4 mod289(vec4 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
+vec4 permute(vec4 x){ return mod289(((x*34.0)+1.0)*x); }
+vec4 taylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314 * r; }
+float snoise(vec3 v){
+  const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+  const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+  vec3 i  = floor(v + dot(v, C.yyy));
+  vec3 x0 = v - i + dot(i, C.xxx);
+  vec3 g = step(x0.yzx, x0.xyz);
+  vec3 l = 1.0 - g;
+  vec3 i1 = min(g.xyz, l.zxy);
+  vec3 i2 = max(g.xyz, l.zxy);
+  vec3 x1 = x0 - i1 + C.xxx;
+  vec3 x2 = x0 - i2 + C.yyy;
+  vec3 x3 = x0 - D.yyy;
+  i = mod289(i);
+  vec4 p = permute(permute(permute(
+      i.z + vec4(0.0, i1.z, i2.z, 1.0))
+    + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+    + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+  float n_ = 0.142857142857;
+  vec3 ns = n_ * D.wyz - D.xzx;
+  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+  vec4 x_ = floor(j * ns.z);
+  vec4 y_ = floor(j - 7.0 * x_);
+  vec4 x = x_ * ns.x + ns.yyyy;
+  vec4 y = y_ * ns.x + ns.yyyy;
+  vec4 h = 1.0 - abs(x) - abs(y);
+  vec4 b0 = vec4(x.xy, y.xy);
+  vec4 b1 = vec4(x.zw, y.zw);
+  vec4 s0 = floor(b0)*2.0 + 1.0;
+  vec4 s1 = floor(b1)*2.0 + 1.0;
+  vec4 sh = -step(h, vec4(0.0));
+  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+  vec3 p0 = vec3(a0.xy, h.x);
+  vec3 p1 = vec3(a0.zw, h.y);
+  vec3 p2 = vec3(a1.xy, h.z);
+  vec3 p3 = vec3(a1.zw, h.w);
+  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+  p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+  m = m * m;
+  return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+}
+float fbm(vec3 p){
+  float f = 0.0, a = 0.5;
+  for (int i = 0; i < 4; i++) { f += a * snoise(p); p *= 2.03; a *= 0.5; }
+  return f;
+}
+`;
+
+/* ============================================================
+   1. SKY — bright hazy teal gradient + streaky nebula + stars
+   ============================================================ */
+const skyMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide,
+  depthWrite: false,
+  uniforms: { uTime: { value: 0 } },
+  vertexShader: /* glsl */`
+    varying vec3 vDir;
+    void main() {
+      vDir = normalize(position);
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`,
+  fragmentShader: NOISE_GLSL + /* glsl */`
+    uniform float uTime;
+    varying vec3 vDir;
+    void main() {
+      vec3 d = normalize(vDir);
+      // luminous haze gradient: bright teal at the horizon, deepening upward
+      vec3 col = mix(vec3(0.045, 0.26, 0.24), vec3(0.006, 0.03, 0.03),
+                     smoothstep(0.0, 0.45, d.y));
+      float horizon = pow(max(1.0 - abs(d.y), 0.0), 6.0);
+      col += vec3(0.04, 0.24, 0.22) * horizon;
+      // nebula: fbm stretched into long wispy streaks across the dome
+      vec3 q = vec3(d.x * 1.4 - d.y * 2.6, d.y * 3.6 + d.x * 1.4, d.z * 1.4) + vec3(0.0, uTime * 0.008, 0.0);
+      float neb = fbm(q);
+      neb = smoothstep(-0.15, 0.85, neb);
+      float lift = smoothstep(0.0, 0.4, d.y);
+      col += vec3(0.06, 0.40, 0.38) * neb * lift * 0.5;
+      gl_FragColor = vec4(col, 1.0);
+    }`,
+});
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(380, 48, 32), skyMat));
+
+// stars: sparse additive points high on the dome, faint through the haze
+{
+  const N = 1100, pos = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const y = 0.12 + Math.random() * 0.85;            // down near the ridge line too
+    const r = Math.sqrt(Math.max(0, 1 - y * y));
+    pos[i * 3] = Math.cos(a) * r * 360;
+    pos[i * 3 + 1] = y * 360;
+    pos[i * 3 + 2] = Math.sin(a) * r * 360;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const m = new THREE.PointsMaterial({
+    color: 0xd8ffff, size: 0.8, sizeAttenuation: false,
+    transparent: true, opacity: 0.45,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  scene.add(new THREE.Points(g, m));
+}
+
+/* ============================================================
+   2. TERRAIN — one rolling dune field, swelling into far ridges
+   ============================================================ */
+// tiny CPU value-noise (terrain only; shaders use the GLSL one)
+function makeNoise2D(seed) {
+  const hash = (x, y) => {
+    let h = Math.sin(x * 127.1 + y * 311.7 + seed * 74.7) * 43758.5453;
+    return h - Math.floor(h);
+  };
+  return (x, y) => {
+    const xi = Math.floor(x), yi = Math.floor(y);
+    const xf = x - xi, yf = y - yi;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    return hash(xi, yi) * (1 - u) * (1 - v) + hash(xi + 1, yi) * u * (1 - v)
+         + hash(xi, yi + 1) * (1 - u) * v + hash(xi + 1, yi + 1) * u * v;
+  };
+}
+function fbm2(noise, x, y, oct = 4) {
+  let f = 0, a = 0.5, tot = 0;
+  for (let i = 0; i < oct; i++) { f += a * noise(x, y); tot += a; x *= 2.1; y *= 2.1; a *= 0.5; }
+  return f / tot;
+}
+
+const gNoise = makeNoise2D(7);
+function groundH(x, z) {
+  // a flat open plain — only the gentlest undulation underfoot, with the
+  // mountain ridges held far out at the horizon like distant mesas
+  let h = Math.pow(fbm2(gNoise, x * 0.012 + 3.7, z * 0.012 + 9.1, 4), 1.3)
+        * (1.1 + smooth(140, 300, Math.hypot(x, z)) * 20);
+  h += fbm2(gNoise, x * 0.06 + 40, z * 0.06, 2) * 0.35;  // faint surface swell
+  h *= 0.55 + 0.45 * smooth(8, 90, Math.abs(x));         // soft corridor to the horizon
+  // flat clearing where the orb lands, so it hovers over calm ground
+  const flat = smooth(6, 18, Math.hypot(x + 7.5, z + 14));
+  return 0.25 + (h - 0.25) * flat;
+}
+// fine sandy grain, drawn once and tiled — the reference ground's velvety
+// mottled surface (per-pixel tonal noise, plus the same map as a bump layer)
+function grainTexture(size = 512) {
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d");
+  const img = ctx.createImageData(size, size);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = 205 + Math.random() * 50;              // ±12% brightness grain
+    img.data[i] = v * 0.55;                          // tinted toward teal-grey
+    img.data[i + 1] = v;
+    img.data[i + 2] = v * 0.95;
+    img.data[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(26, 18);
+  return tex;
+}
+
+{
+  const geo = new THREE.PlaneGeometry(560, 380, 200, 140);
+  geo.rotateX(-Math.PI / 2);
+  geo.translate(0, 0, -90);          // spans z +100 … -280, camera well inside
+  const p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) p.setY(i, groundH(p.getX(i), p.getZ(i)));
+  geo.computeVertexNormals();
+  geo.computeBoundingSphere();       // bounds must include the raised dunes
+  const grain = grainTexture();
+  const terrainMat = new THREE.MeshStandardMaterial({
+    color: 0x1a4a44, roughness: 0.9, metalness: 0,
+    map: grain, bumpMap: grain, bumpScale: 0.4,
+  });
+  scene.add(new THREE.Mesh(geo, terrainMat));
+}
+
+/* ============================================================
+   3. HORIZON GLOW — the furnace the valley opens onto
+   ============================================================ */
+function radialTexture(inner, outer, w = 256, h = 256) {
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d");
+  const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+  g.addColorStop(0, inner);
+  g.addColorStop(1, outer);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+const glowTex = radialTexture("rgba(140,255,246,1)", "rgba(20,80,76,0)");
+{
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(260, 70),
+    new THREE.MeshBasicMaterial({
+      map: glowTex, transparent: true, opacity: 0.45,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+    })
+  );
+  m.position.set(0, 8, -240);
+  scene.add(m);
+}
+
+// soft light pool on the ground where the orb settles
+const pool = new THREE.Mesh(
+  new THREE.PlaneGeometry(13, 13),
+  new THREE.MeshBasicMaterial({
+    map: glowTex, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  })
+);
+pool.rotation.x = -Math.PI / 2;
+// floats just above the flattened clearing so the glow fades out in the air
+// instead of slicing a hard edge into the surrounding dunes
+pool.position.set(-7.5, 0.55, -14);
+scene.add(pool);
+
+/* ============================================================
+   4. THE LIQUID-CHROME ORB — noise-displaced mirror blob
+   The reflections come from a small prebaked studio environment
+   (bright teal softboxes on black), so the surface reads as flowing
+   liquid metal as the lobes slide across the light panels.
+   ============================================================ */
+const pmrem = new THREE.PMREMGenerator(renderer);
+const envScene = new THREE.Scene();
+{
+  const panel = (hex, intensity, w, h, x, y, z) => {
+    const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(intensity) });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+    mesh.position.set(x, y, z);
+    mesh.lookAt(0, 0, 0);
+    envScene.add(mesh);
+  };
+  panel(0xdffffa, 7, 7, 2.6, -6, 6, 5);    // hot cool-white key, upper-left
+  panel(0x1fe6dc, 4, 9, 4, 7, 1.5, -3);    // broad teal wash, right
+  panel(0xffffff, 8, 4, 0.8, 0, 8, -1);    // crisp white strip overhead
+  panel(0x0a4a44, 2, 14, 9, 0, -7, 2);     // deep teal floor bounce
+  panel(0x062a28, 1.6, 18, 12, 0, 0, -9);  // dim back wall so lobes never go dead
+}
+const envTex = pmrem.fromScene(envScene, 0.05).texture;
+
+// settles high and LEFT of frame, large — the reference's composition
+const ORB_SETTLE = new THREE.Vector3(-7.5, 8.2, -14);
+const orbUniforms = {
+  uTime: { value: 0 },
+  uAmp: { value: 0.16 },     // displacement amplitude — eases up once settled
+  uFreq: { value: 0.55 },    // low frequency = big smooth liquid lobes
+  uPoke: { value: 0 },       // hover: how hard the cursor is pulling the liquid
+  uPokeDir: { value: new THREE.Vector3(0, 0, 1) },   // object-space pull direction
+};
+const orbMat = new THREE.MeshStandardMaterial({
+  color: 0xeafffc, metalness: 1, roughness: 0.05,
+  envMap: envTex, envMapIntensity: 1.2,
+  // a breath of self-glow so the liquid never reads as dead metal
+  emissive: 0x0a4a44, emissiveIntensity: 0.25,
+});
+// inject the liquid displacement into the standard material's vertex stage,
+// with neighbour-sampled normals so the chrome reflections track the lobes
+orbMat.onBeforeCompile = (shader) => {
+  Object.assign(shader.uniforms, orbUniforms);
+  shader.vertexShader = NOISE_GLSL + /* glsl */`
+    uniform float uTime, uAmp, uFreq, uPoke;
+    uniform vec3 uPokeDir;
+    vec3 liquidOrth(vec3 v) {
+      return normalize(abs(v.x) > 0.5 ? vec3(-v.y, v.x, 0.0) : vec3(0.0, -v.z, v.y));
+    }
+    vec3 liquid(vec3 p) {
+      vec3 dir = normalize(p);
+      float n = fbm(dir * uFreq + vec3(0.0, uTime * 0.10, uTime * 0.07));
+      // hover: the cursor pulls a wobbling swell out of the side it touches
+      float pk = smoothstep(0.45, 0.95, dot(dir, uPokeDir));
+      n += pk * uPoke * (0.55 + 0.3 * sin(uTime * 7.0));
+      return dir * (length(p) * (1.0 + n * uAmp));
+    }
+  ` + shader.vertexShader
+    .replace("#include <beginnormal_vertex>", /* glsl */`
+      vec3 lDir = normalize(position);
+      vec3 lTng = liquidOrth(lDir);
+      vec3 lBtn = cross(lDir, lTng);
+      float lE = 0.08;
+      vec3 lP0 = liquid(position);
+      vec3 lP1 = liquid(position + lTng * lE);
+      vec3 lP2 = liquid(position + lBtn * lE);
+      // epsilon: a degenerate cross product must never NaN into black flicker
+      vec3 objectNormal = normalize(cross(lP1 - lP0, lP2 - lP0) + vec3(1e-6));
+    `)
+    .replace("#include <begin_vertex>", /* glsl */`
+      vec3 transformed = lP0;
+    `);
+};
+const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(1.9, 64), orbMat);
+// displacement happens on the GPU, so the stock bounding sphere is too tight —
+// culling with it makes the whole blob blink out near the frame edges
+orb.frustumCulled = false;
+const orbGroup = new THREE.Group();
+orbGroup.add(orb);
+// halo: the faintest breath of light around the body (chrome itself is dark)
+const haloMat = new THREE.SpriteMaterial({
+  map: glowTex, transparent: true, opacity: 0,
+  blending: THREE.AdditiveBlending, depthWrite: false,
+});
+const halo = new THREE.Sprite(haloMat);
+halo.scale.setScalar(6);
+orbGroup.add(halo);
+// the orb's own light: washes the clearing beneath it in cyan
+const orbLight = new THREE.PointLight(0x1fe6dc, 0, 55, 1.6);
+orbGroup.add(orbLight);
+orbGroup.visible = false;
+scene.add(orbGroup);
+
+/* ============================================================
+   5. LIGHT SWEEPS — big diagonal beams raking across the sky
+   ============================================================ */
+const streakUniformsList = [];
+function makeStreak({ y, z, len, th, tilt, phase, side }) {
+  const uniforms = {
+    uTime: { value: 0 },
+    uIntensity: { value: 0.3 },
+    uPhase: { value: phase },
+  };
+  const mat = new THREE.ShaderMaterial({
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    uniforms,
+    vertexShader: /* glsl */`
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }`,
+    fragmentShader: /* glsl */`
+      uniform float uTime, uIntensity, uPhase;
+      varying vec2 vUv;
+      void main() {
+        // bright toward the orb-side end, soft falloff across the thickness
+        float along = pow(vUv.x, 1.5);
+        float across = pow(1.0 - abs(vUv.y - 0.5) * 2.0, 1.7);
+        // a slow pulse travelling down the beam (low frequency: no dashed look)
+        float pulse = 0.82 + 0.18 * sin(vUv.x * 3.0 - uTime * 1.4 + uPhase);
+        // whiter core inside a teal ribbon
+        vec3 col = mix(vec3(0.35, 1.0, 0.96), vec3(0.9, 1.0, 1.0), pow(across, 3.0));
+        float a = along * across * pulse * uIntensity;
+        gl_FragColor = vec4(col * a, a);
+      }`,
+  });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(len, th), mat);
+  // beams run from far off-screen in past center, crossing behind the orb,
+  // climbing diagonally like the reference's sky sweeps
+  m.position.set(side * (len / 2 - 30), y, z);
+  m.rotation.z = tilt * side;
+  m.rotation.y = side * -0.1;
+  if (side > 0) m.scale.x = -1;     // flip so the bright end faces center
+  scene.add(m);
+  streakUniformsList.push(uniforms);
+  return m;
+}
+// right side carries most of the energy, like the reference; the lowest beams
+// graze the settled orb (y ≈ 5), the big soft sweeps fan up high behind it
+makeStreak({ y: 6.5, z: -45, len: 150, th: 0.5, tilt: 0.10, phase: 3.1, side: 1 });
+makeStreak({ y: 9, z: -60, len: 200, th: 1.5, tilt: 0.15, phase: 0.0, side: 1 });
+makeStreak({ y: 13, z: -80, len: 240, th: 0.8, tilt: 0.19, phase: 1.7, side: 1 });
+makeStreak({ y: 17, z: -100, len: 270, th: 2.6, tilt: 0.23, phase: 4.4, side: 1 });
+makeStreak({ y: 7.6, z: -50, len: 170, th: 0.32, tilt: 0.12, phase: 5.2, side: 1 });
+makeStreak({ y: 11, z: -70, len: 210, th: 1.1, tilt: 0.17, phase: 2.3, side: -1 });
+makeStreak({ y: 8, z: -55, len: 170, th: 0.45, tilt: 0.13, phase: 0.9, side: -1 });
+makeStreak({ y: 15, z: -92, len: 240, th: 1.8, tilt: 0.21, phase: 4.0, side: -1 });
+
+/* ============================================================
+   6. LIGHTS + POST
+   ============================================================ */
+scene.add(new THREE.HemisphereLight(0x1a5a54, 0x020606, 1.0));
+// the horizon furnace: a far point light that grades the whole dune field
+// from glowing rims at the horizon to dusk near the camera
+const furnace = new THREE.PointLight(0x2fe6d8, 200, 0, 1);
+furnace.position.set(0, 14, -230);
+scene.add(furnace);
+// low raking light from the horizon, slightly off-axis: this is what models
+// the dune curves — every swell catches it on one flank and shades the other
+const rake = new THREE.DirectionalLight(0xafffF4, 1.5);
+rake.position.set(-60, 26, -220);
+scene.add(rake);
+// faint fill from behind the camera so shadowed flanks never go dead
+const fill = new THREE.DirectionalLight(0x0f4a46, 0.5);
+fill.position.set(0, 40, 120);
+scene.add(fill);
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+// sanitizer: one stray NaN/Inf pixel in the scene gets smeared over the WHOLE
+// frame by the bloom blur — the intermittent full-black "blink". Zero out
+// non-finite pixels and clamp the range before bloom ever sees them.
+composer.addPass(new ShaderPass({
+  uniforms: { tDiffuse: { value: null } },
+  vertexShader: /* glsl */`
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`,
+  fragmentShader: /* glsl */`
+    uniform sampler2D tDiffuse;
+    varying vec2 vUv;
+    void main() {
+      vec4 c = texture2D(tDiffuse, vUv);
+      if (any(isnan(c)) || any(isinf(c))) c = vec4(0.0, 0.0, 0.0, 1.0);
+      gl_FragColor = clamp(c, 0.0, 8.0);
+    }`,
+}));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.45, 0.55, 0.35);
+composer.addPass(bloom);
+// fullscreen liquid: a soft ripple that follows the cursor, strength driven
+// by how fast it moves — the whole scene wobbles like disturbed water
+const ripplePass = new ShaderPass({
+  uniforms: {
+    tDiffuse: { value: null },
+    uMouse: { value: new THREE.Vector2(0.5, 0.5) },
+    uStrength: { value: 0 },
+    uTime: { value: 0 },
+    uAspect: { value: innerWidth / innerHeight },
+  },
+  vertexShader: /* glsl */`
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`,
+  fragmentShader: /* glsl */`
+    uniform sampler2D tDiffuse;
+    uniform vec2 uMouse;
+    uniform float uStrength, uTime, uAspect;
+    varying vec2 vUv;
+    void main() {
+      vec2 d = vUv - uMouse;
+      d.x *= uAspect;
+      float dist = length(d);
+      float zone = exp(-dist * dist * 55.0);
+      vec2 dir = d / max(dist, 1e-4);
+      float wave = sin(dist * 42.0 - uTime * 5.0);
+      vec2 off = dir * wave * 0.014 * uStrength * zone;
+      gl_FragColor = texture2D(tDiffuse, vUv - off);
+    }`,
+});
+composer.addPass(ripplePass);
+composer.addPass(new OutputPass());
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+
+/* ============================================================
+   7. SCROLL CHOREOGRAPHY — the orb arrives
+   ============================================================ */
+const track = document.getElementById("track");
+const hint = document.getElementById("hint");
+const headline = document.getElementById("headline");
+
+let pTarget = reduced ? 1 : 0;      // reduced motion: show the settled frame
+let p = pTarget;
+addEventListener("scroll", () => {
+  if (reduced) return;
+  const range = track.offsetHeight - innerHeight;
+  pTarget = clamp01(range > 0 ? scrollY / range : 1);
+}, { passive: true });
+
+// light-touch pointer parallax (same pattern as the index hero), plus the
+// liquid interactions: pointer speed feeds the fullscreen ripple, and the
+// pointer ray feeds the orb's hover-poke
+let mx = 0, my = 0, tmx = 0, tmy = 0;
+let rippleVel = 0;
+const mouseUv = new THREE.Vector2(0.5, 0.5);
+const pointerNDC = new THREE.Vector2(-2, -2);
+addEventListener("pointermove", (e) => {
+  const nx = e.clientX / innerWidth, ny = e.clientY / innerHeight;
+  rippleVel = Math.min(rippleVel + Math.hypot(nx - (tmx + 1) / 2, ny - (tmy + 1) / 2) * 26, 1.2);
+  tmx = nx * 2 - 1;
+  tmy = ny * 2 - 1;
+  pointerNDC.set(tmx, -tmy);
+}, { passive: true });
+
+const raycaster = new THREE.Raycaster();
+let pokeCur = 0;
+
+addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  composer.setSize(innerWidth, innerHeight);
+  ripplePass.uniforms.uAspect.value = innerWidth / innerHeight;
+});
+
+const ORB_START = new THREE.Vector3(7, 11, -80);
+let t = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  if (!reduced) t += 0.01;
+  p += (pTarget - p) * 0.06;
+  mx += (tmx - mx) * 0.04;
+  my += (tmy - my) * 0.04;
+
+  // ---- story beats off scroll progress ----
+  const enter = easeOutCubic(smooth(0.12, 0.62, p));   // orb travels in
+  const settle = smooth(0.62, 1.0, p);                 // orb holds, camera closes in
+
+  orbGroup.visible = enter > 0.002;
+  orbGroup.position.lerpVectors(ORB_START, ORB_SETTLE, enter);
+  // a slight arc: it swings down through the beams rather than gliding straight
+  orbGroup.position.y += Math.sin(enter * Math.PI) * 2.2;
+  const s = lerp(0.45, 1.3, enter);
+  orb.scale.setScalar(s);
+  orb.rotation.y = t * 0.1;
+  // idle float once it has arrived
+  orbGroup.position.y += Math.sin(t * 0.7) * 0.12 * enter;
+
+  orbUniforms.uTime.value = t;
+  orbUniforms.uAmp.value = 0.15 + settle * 0.07;       // most alive when settled
+  orbLight.intensity = enter * (24 + Math.sin(t * 2.1) * 4);
+  haloMat.opacity = enter * 0.15;
+  pool.material.opacity = enter * 0.35;
+
+  // hover-poke: when the pointer ray touches the blob, the liquid swells
+  // toward it and keeps wobbling until the cursor leaves
+  let pokeTarget = 0;
+  if (orbGroup.visible && !reduced) {
+    raycaster.setFromCamera(pointerNDC, camera);
+    const hit = raycaster.intersectObject(orb, false)[0];
+    if (hit) {
+      pokeTarget = 1;
+      const local = orb.worldToLocal(hit.point.clone()).normalize();
+      const dir = orbUniforms.uPokeDir.value.lerp(local, 0.25);
+      // lerping through the exact center would normalize a zero vector into
+      // NaN and poison every orb vertex from then on — snap past it instead
+      if (dir.lengthSq() < 1e-4) dir.copy(local);
+      dir.normalize();
+    }
+    mount.style.cursor = hit ? "pointer" : "";
+  }
+  pokeCur += (pokeTarget - pokeCur) * 0.07;
+  orbUniforms.uPoke.value = pokeCur * 0.55;
+
+  // fullscreen liquid ripple chases the cursor, fading as it slows
+  mouseUv.set((tmx + 1) / 2, 1 - (tmy + 1) / 2);
+  ripplePass.uniforms.uMouse.value.lerp(mouseUv, 0.18);
+  ripplePass.uniforms.uStrength.value += (rippleVel - ripplePass.uniforms.uStrength.value) * 0.1;
+  ripplePass.uniforms.uTime.value = t;
+  rippleVel *= 0.93;
+
+  // sweeps: luminous ambience at rest, surging while the orb rides them in
+  const surge = 0.55 + enter * 0.9 + Math.sin(enter * Math.PI) * 0.6;
+  for (const u of streakUniformsList) {
+    u.uTime.value = t;
+    u.uIntensity.value = surge;
+  }
+
+  skyMat.uniforms.uTime.value = t;
+
+  // camera: slow idle drift + parallax + a gentle dolly-in as the orb settles
+  camera.position.x = CAM_BASE.x + Math.sin(t * 0.11) * 0.4 + mx * 0.5;
+  camera.position.y = CAM_BASE.y + Math.cos(t * 0.09) * 0.15 - my * 0.3;
+  camera.position.z = CAM_BASE.z - settle * 1.6;
+  // gaze held nearly level at the horizon, lifting a touch as the orb lands —
+  // sky and plain share the frame like the reference
+  const look = new THREE.Vector3(0, lerp(5.2, 6.4, enter * 0.85), -14);
+  camera.lookAt(look);
+
+  // DOM beats
+  hint.style.opacity = p < 0.04 ? 1 : 0;
+  headline.classList.toggle("on", settle > 0.35);
+
+  composer.render();
+}
+animate();
+</script>
+
+<!-- ============ Lenis smooth / inertial scroll (same as index.html) ============ -->
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script>
+(function () {
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced || typeof Lenis === "undefined") return;
+  const lenis = new Lenis({
+    duration: 1.15,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    smoothWheel: true,
+    touchMultiplier: 1.2,
+  });
+  function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+  requestAnimationFrame(raf);
+  window.__lenis = lenis;
+})();
+</script>
+</body>
+</html>

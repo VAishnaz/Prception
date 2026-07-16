@@ -27,6 +27,15 @@ so it needs ~50 rendered frames to settle. At software-GL frame rates that is
 and wait ~45 s before the hero screenshot. Renders darker than on a real GPU; judge
 shape/layout, not lighting.
 
+**Always ALSO screenshot on the real GPU before calling a visual done:**
+`chromium.launch({ args: ["--enable-gpu", "--use-gl=angle", "--use-angle=d3d11"] })`
+— this uses the machine's actual GPU (AMD Radeon Vega 10 via ANGLE/D3D11), which is
+what the user sees in Chrome, and it catches driver-level bugs SwiftShader silently
+tolerates. Real case: `THREE.Reflector` render-to-texture inside an EffectComposer
+pass blacks out the ENTIRE frame on D3D11 while looking perfect in SwiftShader
+(hit on world.html 2026-07-16; fixed by removing Reflector). GPU frames are also
+~10× faster, so waits can be much shorter.
+
 ## Flows worth driving
 
 - Hero at scroll 0 after settling: assembled 3D mark (must match the official logo:
