@@ -260,6 +260,14 @@
      of scroll and consecutive wipes never overlap.) */
   .pin::after { content: ""; display: block; height: 200svh; }
   .intro + .pin, .pin + .pin, .pin + .work { margin-top: -100svh; }
+  /* Key Facts' pin carries extra hold: 200svh for its own arrival (wipe1),
+     then 200svh where the Services sheet PUSHES in from the right shoving
+     the Key Facts content out, then 200svh where Services' light backdrop
+     dissolves into the live world underneath (--world) — plus a 60svh
+     buffer so the dissolve is fully settled before Work's own approach
+     (wipe3) starts covering the screen; without it the transitions visibly
+     overlap. */
+  .pin-keyfacts::after { height: 700svh; }
 
   /* ---- trionn stepped wipe ----
      Each transition has a FIXED full-viewport stack of bars (.wipe) sitting
@@ -281,10 +289,10 @@
   .wipe-dark i { background: var(--bg-2); }
   #wipe1 { z-index: 5; } #wipe2 { z-index: 7; } #wipe3 { z-index: 9; }
   /* the buried sheet sinks away underneath: recedes + dims while covered */
-  .stage, .keyfacts, .focus {
+  .stage, .keyfacts {
     transform: scale(calc(1 - var(--bury, 0)));
   }
-  .stage::after, .keyfacts::after, .focus::after {
+  .stage::after, .keyfacts::after, .services::after {
     content: ""; position: absolute; inset: 0; z-index: 22;
     background: #000; opacity: var(--cover, 0);
     pointer-events: none;
@@ -306,6 +314,17 @@
     background: #edefec;
     padding: clamp(4.5rem, 8vw, 7.5rem) 2.25rem clamp(3.5rem, 6vw, 5.5rem);
     color: var(--ink);
+    /* the Services overlay waits translated one full width to the right;
+       clip it so it never widens the page */
+    overflow-x: clip;
+  }
+  /* everything inside Key Facts rides this wrapper: the arriving Services
+     sheet PUSHES it fully off-screen to the left (--push 0 -> 1), moving in
+     exact lockstep with Services' own -100% -> 0% entry so the two sheets
+     stay edge-to-edge the whole time, side by side — Services never lays
+     over Key Facts, it shoves it clean off along the same horizontal line. */
+  .kf-push {
+    transform: translateX(calc(var(--push, 0) * -100%));
   }
   .kf-head {
     display: flex; flex-direction: column; align-items: center;
@@ -405,30 +424,75 @@
   .kf-strip .tick { color: var(--teal); }
 
   /* ============================================================
-     FOCUSED VISION
+     SERVICES  (pushes in from the RIGHT over the docked Key Facts sheet,
+     pins, then its light backdrop dissolves into the live 3D world while
+     the giant service words hold dead-center over it)
      ============================================================ */
-  .focus {
-    position: relative; z-index: 8;
-    /* full viewport: while it slides over the frozen Key Facts sheet it must
-       cover the whole screen, exactly like Key Facts covers the hero */
-    min-height: 100svh; display: flex; align-items: center;
-    padding: 8rem 2rem; background: var(--bg-2); color: var(--ink);
+  .services {
+    /* NOT a separate sticky sheet — sits absolutely on top of the .keyfacts
+       sticky sheet it shares a .pin with, exact same rect, zero vertical
+       travel. It arrives translated a full width to the right and slides in
+       as --push climbs 0 -> 1 (the Key Facts content gets shoved left by
+       the same variable, see .kf-push).
+       Anchored to the sheet's BOTTOM at exactly one viewport tall: a sheet
+       taller than 100svh docks showing its bottom screen (see the negative
+       sticky-top JS), so this is the slice actually on screen during the
+       push + dissolve — sizing the world canvas to the whole tall sheet
+       instead framed the scene for a rect mostly out of view. */
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: min(100svh, 100%);
+    z-index: 8; overflow: hidden;
+    transform: translateX(calc((1 - var(--push, 0)) * 100%)) scale(calc(1 - var(--bury, 0)));
+    pointer-events: none;
   }
-  .focus-inner { max-width: min(92vw, 900px); }
-  .focus-idx {
-    display: block; font-size: 0.7rem; font-weight: 700;
-    letter-spacing: 0.28em; text-transform: uppercase; color: var(--teal);
-    margin-bottom: 1.4rem;
+  .services.docked { pointer-events: auto; }
+  .svc-world { position: absolute; inset: 0; z-index: 0; }
+  .svc-world canvas { display: block; width: 100%; height: 100%; }
+  /* the light backdrop: covers the world canvas until the dissolve
+     (--world 0 -> 1) fades it away, leaving the text over the live world */
+  .svc-bg {
+    position: absolute; inset: 0; z-index: 1;
+    background: #d9dbd6;
+    opacity: calc(1 - var(--world, 0));
   }
-  .focus-h {
-    font-size: clamp(2rem, 6vw, 4.6rem); font-weight: 800;
-    line-height: 1.05; letter-spacing: -0.02em; text-transform: uppercase;
+  .svc-ui {
+    position: relative; z-index: 2; height: 100%;
+    display: flex; flex-direction: column; align-items: center;
+    padding: clamp(1.6rem, 3.2vh, 2.6rem) 2.25rem;
+    color: #14171a;
+    transition: color 0.7s ease;
   }
-  .focus-h .accent { color: var(--teal); }
-  .focus-sub {
-    margin-top: 1.6rem; font-size: clamp(0.95rem, 1.6vw, 1.15rem);
-    color: var(--ink-dim); max-width: 46ch;
+  /* once the world is underneath, the ink flips light so it stays legible */
+  .services.in-world .svc-ui { color: #eef0ee; }
+  .svc-label {
+    font-family: var(--font-grot); font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
   }
+  .svc-label .tick { color: var(--teal); }
+  .svc-stack {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .svc-stack .krv > * {
+    font-family: var(--font-grot);
+    font-size: clamp(2.4rem, 9.5vw, 9rem); font-weight: 700;
+    line-height: 0.84; letter-spacing: -0.035em; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .svc-foot {
+    position: relative; width: 100%;
+    display: flex; align-items: baseline; justify-content: center;
+    font-family: var(--font-grot); font-size: 0.78rem; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .svc-foot .tick { color: var(--teal); }
+  .svc-view {
+    position: absolute; right: 0; bottom: 0;
+    font-family: var(--font-mono); font-size: 0.72rem;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    border-bottom: 1px solid currentColor; padding-bottom: 0.45rem;
+  }
+  .svc-view:hover { color: var(--teal); }
 
   /* ============================================================
      WORK
@@ -470,6 +534,9 @@
     .keyfacts { padding-left: 1.2rem; padding-right: 1.2rem; }
     .kf-cards { grid-template-columns: 1fr; }
     .kf-card { min-height: 260px; }
+    .svc-ui { padding-left: 1.2rem; padding-right: 1.2rem; }
+    .svc-foot { flex-direction: column; align-items: center; gap: 0.9rem; }
+    .svc-view { position: static; }
   }
   @media (max-width: 900px) and (min-width: 641px) {
     .kf-cards { grid-template-columns: 1fr; max-width: 460px; margin: 0 auto; }
@@ -482,8 +549,12 @@
     .pin::after { display: none; }
     .intro + .pin, .pin + .pin, .pin + .work { margin-top: 0; }
     .wipe { display: none; }
-    .stage, .keyfacts, .focus { transform: none !important; }
-    .stage::after, .keyfacts::after, .focus::after { display: none; }
+    .stage, .keyfacts, .services { transform: none !important; }
+    .stage::after, .keyfacts::after, .services::after { display: none; }
+    /* Services becomes a plain static section after Key Facts */
+    .services { position: static; height: auto; min-height: 100svh; pointer-events: auto; }
+    .svc-bg { opacity: 1; }
+    .kf-push { transform: none !important; opacity: 1 !important; }
     .krv > *, .kf-cap { transform: none !important; transition: none !important; opacity: 1 !important; }
     .kf-row::before { transform: none !important; transition: none !important; }
     .kf-reel { transition: none !important; }
@@ -508,6 +579,8 @@
   .pin > section { position: static; }
   .pin::after { display: none; }
   .intro + .pin, .pin + .pin, .pin + .work { margin-top: 0; }
+  .services { position: static; height: auto; min-height: 100svh; transform: none; pointer-events: auto; }
+  .svc-bg { opacity: 1; }
 </style></noscript>
 
 <!-- ================= FULLSCREEN MENU ================= -->
@@ -515,8 +588,8 @@
   <button class="pill ghost menu-close" id="menuClose" aria-label="Close menu">Close</button>
   <nav>
     <a href="#work">Work</a>
-    <a href="#focus">Studio</a>
-    <a href="#work">Services</a>
+    <a href="#keyfacts">Studio</a>
+    <a href="#services">Services</a>
     <a href="#work">Contact</a>
   </nav>
 </div>
@@ -599,8 +672,9 @@
 </section>
 
 <!-- ================= KEY FACTS (rises over the idle logo, trionn-style) ================= -->
-<div class="pin">
+<div class="pin pin-keyfacts">
 <section class="keyfacts" id="keyfacts">
+  <div class="kf-push">
   <div class="kf-head kf-anim">
     <span class="kf-label"><span class="tick">&#10022;</span> Key Facts</span>
     <h2 class="kf-title">
@@ -639,16 +713,30 @@
       </div>
     </div>
   </div>
-</section>
-</div>
+  </div><!-- /.kf-push -->
 
-<!-- ================= FOCUSED VISION (slides over the stuck Key Facts sheet) ================= -->
-<div class="pin">
-<section class="focus" id="focus">
-  <div class="focus-inner">
-    <span class="focus-idx">Approach</span>
-    <h2 class="focus-h"><span class="accent">Focused vision.</span><br />Measured execution.</h2>
-    <p class="focus-sub">From idea to outcome — every decision made with intent.</p>
+  <!-- ================= SERVICES: NOT a section that slides up — it sits
+       absolutely inside this same sticky sheet, exact same rect as Key Facts,
+       and PUSHES in from the right (--push 0 -> 1) shoving the Key Facts
+       content out to the left. Once docked it holds, then its light backdrop
+       dissolves into the live 3D world underneath (--world 0 -> 1) while the
+       giant service words stay dead-center. ================= -->
+  <div class="services" id="services">
+    <div class="svc-world" id="focusWorld" data-paused="1" aria-hidden="true"></div>
+    <div class="svc-bg" aria-hidden="true"></div>
+    <div class="svc-ui kf-anim">
+      <span class="svc-label"><span class="tick">&#10022;</span> Our Services</span>
+      <div class="svc-stack">
+        <span class="krv"><span>A.I.</span></span>
+        <span class="krv" style="--d:0.08s"><span>Design</span></span>
+        <span class="krv" style="--d:0.16s"><span>Development</span></span>
+        <span class="krv" style="--d:0.24s"><span>Branding</span></span>
+      </div>
+      <div class="svc-foot">
+        <span><span class="tick">&#10022;</span> Built with intent. Built to work.</span>
+        <a class="svc-view" href="#work">View Services <span>&rarr;</span></a>
+      </div>
+    </div>
   </div>
 </section>
 </div>
@@ -672,9 +760,10 @@
   <span>Made with perception</span>
 </footer>
 
-<!-- stepped wipes: fixed bar stacks that cover each section before the next reveals -->
+<!-- stepped wipes: fixed bar stacks that cover each section before the next reveals.
+     (Key Facts -> Focused Vision has no wipe2 bars anymore — that transition is a
+     plain fade into the live 3D world instead, see --world below.) -->
 <div class="wipe" id="wipe1" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-<div class="wipe wipe-dark" id="wipe2" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 <div class="wipe wipe-dark" id="wipe3" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 
 <!-- ============ 3D glass logo (Three.js) ============ -->
@@ -692,9 +781,11 @@ import * as THREE from "three";
 const mount = document.getElementById("sign");
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
 } catch (e) { mount.style.display = "none"; throw e; }
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+// DPR capped at 1.5: this GPU (Vega 10 class) drops frames hard above that
+// on a fullscreen canvas — same lesson as the world scene's 1.25 cap
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
@@ -822,9 +913,12 @@ for (const g of ringGeos) for (const z of [0, 0.24]) {
   outlineGrp.add(ring);
 }
 // a faint solid backing so the outline reads as a hollow logo, not floating lines
+// no transmission here: a transmissive material anywhere in the scene forces
+// three.js to render the WHOLE scene an extra time per frame; at 0.25 opacity
+// the effect was invisible anyway
 const backingMat = new THREE.MeshPhysicalMaterial({
-  color: 0x0a1216, metalness: 0.0, roughness: 0.25, transmission: 0.6,
-  thickness: 0.6, transparent: true, opacity: 0.25, envMapIntensity: 1.2,
+  color: 0x0a1216, metalness: 0.0, roughness: 0.25,
+  transparent: true, opacity: 0.25, envMapIntensity: 1.2,
 });
 for (const g of mainGeos) {
   const backing = new THREE.Mesh(g, backingMat);
@@ -951,6 +1045,11 @@ for (let gx = 0; gx < GRID_X; gx++) for (let gy = 0; gy < GRID_Y; gy++) {
   const x0 = X_MIN + gx * cellW, x1 = x0 + cellW;
   const y0 = Y_MIN + gy * cellH, y1 = y0 + cellH;
   const gMat = glass.clone(); gMat.transparent = true;
+  // shards drop the expensive transmission (kept only on the whole skin):
+  // with no transmissive object visible during the burst/fan, three.js skips
+  // its extra full-scene transmission render — the single biggest frame cost
+  // exactly while the pieces are moving. Ghosted, moving shards look the same.
+  gMat.transmission = 0;
 
   // pure glass pieces — no edge lines on the cut shards: clipping the concave
   // logo shape leaves stray edge fragments, and the fixed outline plus the
@@ -968,10 +1067,10 @@ for (let gx = 0; gx < GRID_X; gx++) for (let gy = 0; gy < GRID_Y; gy++) {
   skinShards.push({
     grp: shard, mat: gMat,
     hx: (x0 + x1) / 2, hy: (y0 + y1) / 2,
-    cur: 1,                        // per-piece eased fan value: starts scattered so load-in only joins inward, never spreads out first
+    cur: 1,                        // per-piece eased fan value: starts scattered so the load-in joins inward
     delay: rand() * 0.22,          // staggered departure/return
     rate: 0.05 + rand() * 0.04,    // per-piece softness
-    loadRate: 0.018 + rand() * 0.014, // slower chase used only for the first load-in
+    loadRate: 0.16 + rand() * 0.08, // FAST chase for the load-in — the whole join lands in ~1s
     jit: (rand() - 0.5) * 0.9,     // organic angular jitter
     dist: 1.0 + rand() * 1.1,      // how far it flies — a loose halo, not a blast
     peelZ: (rand() - 0.5) * 2.2,   // depth scatter: in FRONT and BEHIND alike
@@ -1037,8 +1136,11 @@ outer.add(embers);
 // off into the air. The bolts live inside the logo's group, so they ride its
 // rotation and stay glued to the mark; their jitter is regenerated every few
 // frames for a live electric crackle.
+// raycast ONLY the seamless whole skin (2 meshes, the full logo silhouette):
+// hover lightning exists only while the logo is assembled, and raycasting all
+// ~50 shard/backing meshes every frame was real per-frame CPU work
 const sparkTargets = [];
-group.traverse((o) => { if (o.isMesh) sparkTargets.push(o); });
+wholeSkin.traverse((o) => { if (o.isMesh) sparkTargets.push(o); });
 const raycaster = new THREE.Raycaster();
 const pointerNDC = new THREE.Vector2(-2, -2);
 let pointerSeen = false, burstQueued = false, nextSparkT = 0;
@@ -1217,7 +1319,7 @@ function updateSparks(dt) {
   // lightning is a hero-only flourish: once the page has scrolled past the
   // opening of the first section, hover no longer strikes (existing bolts
   // still fade out on their own below)
-  if (pointerSeen && window.__inHero !== false) {
+  if (pointerSeen && window.__inHero !== false && wholeSkin.visible) {
     raycaster.setFromCamera(pointerNDC, camera);
     const hit = raycaster.intersectObjects(sparkTargets, false).find((h) => chainVisible(h.object));
     if (hit) {
@@ -1250,7 +1352,7 @@ function updateSparks(dt) {
 }
 
 /* fan amount: 0 = skin fully clads the logo, 1 = skin peeled off, only outline.
-   window.__logoFan drives it. Starts peeled so load reveal clads the logo. */
+   window.__logoFan drives it. Starts peeled so the load-in visibly rejoins. */
 window.__logoFan = 1;
 let fanCur = 1;
 function applyFan(f) {
@@ -1261,7 +1363,7 @@ function applyFan(f) {
   let settled = f < 0.05;
   if (settled) for (const s of skinShards) if (s.cur > 0.06) { settled = false; break; }
   if (settled) for (const s of skinShards) s.cur = 0; // clean start for the next burst
-  if (settled) window.__loadJoining = false; // load-in fully landed: back to normal speed
+  if (settled) window.__loadJoining = false; // load-in landed: hand over to normal rates
   wholeSkin.visible = settled;
   // rim glow eases in over the tail of the rejoin instead of popping at the swap
   rimMat.opacity = Math.min(Math.max((0.5 - f) / 0.5, 0), 1);
@@ -1269,13 +1371,9 @@ function applyFan(f) {
     s.grp.visible = !settled;
     // staggered, per-piece softened progress -> organic burst and soft rejoin
     const local = Math.min(Math.max((f - s.delay) / (1 - s.delay), 0), 1);
-    // during the first load-in, chase the target much more slowly so the
-    // pieces visibly drift together instead of snapping in over a couple frames.
-    // Stays slow for the WHOLE join, including its tail (window.__loadJoining
-    // only clears once every shard is actually home — see below), so the
-    // final approach never speeds back up to the normal scroll-driven rate.
-    const rate = window.__loadJoining ? s.loadRate : s.rate;
-    s.cur += (local - s.cur) * rate;
+    // during the load-in, chase MUCH faster than the scroll rate so the
+    // rejoin reads as one quick, decisive snap-together instead of a drift
+    s.cur += (local - s.cur) * (window.__loadJoining ? s.loadRate : s.rate);
     const e = s.cur * s.cur * (3 - 2 * s.cur); // smoothstep
     // fan straight out from the side the piece sits on, in the logo's OWN
     // space: the offset rides the logo's rotation, and the piece itself
@@ -1283,11 +1381,9 @@ function applyFan(f) {
     const a = Math.atan2(s.hy + group.position.y, s.hx + group.position.x) + s.jit;
     // gentle vertical drift while scattered, so the cloud still breathes
     const bob = Math.sin(t * s.bobF + s.bobP) * 0.07 * e;
-    // on first load only, pieces start far outside the viewport and travel
-    // inward to assemble; window.__loadFar eases 1 -> far -> 1 during the
-    // opening bloom and stays 1 (no-op) for every later scroll-driven fan
-    const far = window.__loadFar || 1;
-    const dist = s.dist * far;
+    // on first load only, pieces start beyond their normal scatter radius and
+    // travel inward; window.__loadFar eases back to 1 during the quick bloom
+    const dist = s.dist * (window.__loadFar || 1);
     s.grp.position.set(Math.cos(a) * dist * e, Math.sin(a) * dist * 0.8 * e + bob, s.peelZ * e);
     // pieces go ghost almost as soon as they leave home and only re-solidify
     // over the last stretch of the return, so displaced slabs never read as
@@ -1305,6 +1401,10 @@ window.__signZoom = 1;
 let t = 0;
 function animate() {
   requestAnimationFrame(animate);
+  // fully buried under the docked Key Facts sheet (flag set by the wipe
+  // script): skip ALL per-frame work — nothing of this canvas can be seen.
+  // The rAF keeps ticking so rendering resumes instantly on scroll-up.
+  if (window.__stageCovered) return;
   t += 0.01;
   mx += (tmx - mx) * 0.05; my += (tmy - my) * 0.05;
   // scroll-driven travel of the whole logo (moves while panels peel)
@@ -1322,7 +1422,9 @@ function animate() {
   outer.position.y = panY + Math.sin(t * 0.7) * 0.06;
   // ease the shatter toward its scroll-driven target (soft, trionn-like)
   const fanTarget = window.__logoFan == null ? 1 : window.__logoFan;
-  fanCur += (fanTarget - fanCur) * 0.07;
+  // the global fan easing also runs hot during the load-in so the rejoin
+  // starts the moment the scene renders, with zero perceptible lag
+  fanCur += (fanTarget - fanCur) * (window.__loadJoining ? 0.18 : 0.07);
   applyFan(fanCur);
   embers.rotation.y = t * 0.06;
   embers.rotation.x = Math.sin(t * 0.11) * 0.15;
@@ -1333,7 +1435,17 @@ function animate() {
   updateSparks(0.016);
   renderer.render(scene, camera);
 }
+// tell the reveal script the scene is actually rendering NOW — the load-in
+// bloom keys off this, not page parse time, so the rejoin is always visible
+window.__logoReady = true;
+window.dispatchEvent(new Event("logo-ready"));
 animate();
+</script>
+
+<!-- ============ Services background: the 3D world ============ -->
+<script type="module">
+import { mountWorld } from "./js/world/world.js";
+mountWorld(document.getElementById("focusWorld"));
 </script>
 
 <!-- ============ Lenis smooth / inertial scroll ============ -->
@@ -1387,7 +1499,7 @@ animate();
   const FAN_END = 0.9;
   const smooth = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
   let ticking = false;
-  let loadBloom = 1;   // extra fan added at load, eased to 0 by finish()
+  let loadBloom = 1;   // extra fan at load, eased to 0 fast by the reveal bloom
 
   // beat overlays: read their scroll windows once
   const beats = Array.from(document.querySelectorAll(".beat")).map((el) => ({
@@ -1479,38 +1591,41 @@ animate();
     addEventListener("resize", onScroll);
   }
 
-  /* ---------- Preloader ---------- */
+  /* ---------- Reveal ---------- */
   function bloomTogether() {
-    // ease the load-bloom fan from 1 -> 0 so the logo assembles from its slabs
-    const dur = 5200, start = performance.now();
-    window.__loadJoining = true; // slow join rate lasts until every shard is actually home
+    // FAST load-in: shards fly in and the skin rejoins in ~1s, starting the
+    // very first frame after reveal — ease-out, so it moves immediately and
+    // only decelerates into the landing.
+    const dur = 900, start = performance.now();
+    window.__loadJoining = true; // fast join rates until every shard is home
     function step(now) {
       const x = Math.min((now - start) / dur, 1);
-      // ease-OUT, not ease-in-out: smooth(x) sits nearly flat for the first
-      // ~second, which reads as the scattered pieces hanging motionless
-      // before the join starts. Ease-out moves from the very first frame
-      // and decelerates into a gentle landing instead.
       const eo = 1 - Math.pow(1 - x, 3);
       loadBloom = 1 - eo;
-      // pieces begin far outside the viewport (~9x their normal scatter
-      // radius) and ease back down to their normal distance as they arrive,
-      // so the very first reveal reads as parts flying IN from off-screen
-      // rather than a small local reassembly
-      window.__loadFar = 1 + 8 * (1 - eo);
+      // pieces start a bit beyond their normal scatter radius and sweep in
+      window.__loadFar = 1 + 3 * (1 - eo);
       applyScroll();
       if (x < 1) requestAnimationFrame(step); else { loadBloom = 0; window.__loadFar = 1; }
     }
     requestAnimationFrame(step);
   }
 
-  // No preloader: reveal immediately and let the logo assemble from its slabs.
+  // No preloader: reveal immediately; the skin rejoin starts the instant the
+  // 3D scene reports its first render (logo-ready), never before — otherwise
+  // the fast bloom could play out invisibly while three.js is still loading.
   body.classList.add("revealed");
   body.classList.remove("locked");
   if (reduced) {
     loadBloom = 0;
     window.__logoFan = 0;
   } else {
-    bloomTogether();          // logo assembles from its own fanned slabs
+    let started = false;
+    const go = () => { if (!started) { started = true; bloomTogether(); } };
+    if (window.__logoReady) go();
+    else {
+      addEventListener("logo-ready", go, { once: true });
+      setTimeout(go, 6000); // fallback: never leave the logo stuck scattered
+    }
   }
 })();
 </script>
@@ -1534,6 +1649,29 @@ animate();
     secs.forEach((s) => ro.observe(s));
   }
 
+  // capture the scrollY at which Key Facts docks (its sticky offset stops
+  // changing) so the Key Facts -> world dissolve has a clean zero to measure
+  // from, the same trick __heroLandY uses for wipe1.
+  let kfLandY = null;
+  {
+    const kfSec = document.getElementById("keyfacts");
+    if (kfSec) {
+      // dock scrollY derived from GEOMETRY (pin top minus the sticky offset),
+      // not by catching the dock moment on a scroll event: a fast flick, an
+      // anchor jump (menu "Studio") or a reload restoring deep scroll never
+      // fires an event exactly at the dock, which used to anchor the
+      // Key Facts -> world dissolve far too low — or lose it entirely, so
+      // the world never seemed to arrive after Key Facts.
+      const checkLand = () => {
+        kfLandY = kfSec.parentElement.getBoundingClientRect().top + window.scrollY
+                - parseFloat(kfSec.style.top || "0");
+      };
+      addEventListener("scroll", checkLand, { passive: true });
+      addEventListener("resize", checkLand);
+      checkLand();
+    }
+  }
+
   /* ---- trionn stepped wipe: over the ~2 viewports of scroll before a
      sheet docks, its fixed .wipe bars grow ONE AFTER ANOTHER bottom-up
      until the screen is a solid cover; the sheet then slides in over that
@@ -1542,14 +1680,13 @@ animate();
      Everything scrubs with scroll, fully reversible. ---- */
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduced) return;
-  const kf = document.getElementById("keyfacts"), fo = document.getElementById("focus"),
+  const kf = document.getElementById("keyfacts"), svc = document.getElementById("services"),
         wk = document.getElementById("work");
   const pairs = [
     // track: the in-flow element whose top edge measures the transition
     // (the .pin wrapper for sticky sheets; work sits in flow itself)
     { wipe: document.getElementById("wipe1"), sheet: kf, track: kf && kf.parentElement, under: document.querySelector(".stage") },
-    { wipe: document.getElementById("wipe2"), sheet: fo, track: fo && fo.parentElement, under: kf },
-    { wipe: document.getElementById("wipe3"), sheet: wk, track: wk, under: fo },
+    { wipe: document.getElementById("wipe3"), sheet: wk, track: wk, under: svc },
   ].filter((p) => p.wipe && p.sheet && p.track && p.under)
    .map((p) => ({ ...p, bars: Array.from(p.wipe.querySelectorAll("i")) }));
   const smooth = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
@@ -1584,10 +1721,39 @@ animate();
       });
       // once the sheet is docked it covers the viewport itself; hide the
       // wipe so it can never sit over later content (e.g. the footer)
-      wipe.style.visibility = w > 0.001 && sheet.getBoundingClientRect().top > 0.5 ? "visible" : "hidden";
+      const sheetTop = sheet.getBoundingClientRect().top;
+      wipe.style.visibility = w > 0.001 && sheetTop > 0.5 ? "visible" : "hidden";
+      // hero canvas is invisible under the docked Key Facts sheet — tell its
+      // render loop to skip all work until the user scrolls back up
+      if (wipe.id === "wipe1") window.__stageCovered = w >= 0.999 && sheetTop <= 0.5;
       const e = smooth(Math.min(w / 0.57, 1));
       under.style.setProperty("--cover", (e * 0.6).toFixed(3));
       under.style.setProperty("--bury", (e * 0.045).toFixed(4));
+    }
+
+    // Key Facts -> Services -> world: all measured off the scrollY where Key
+    // Facts docked (kfLandY). First the Services sheet PUSHES in from the
+    // right (--push 0 -> 1: 0.4vh of hold, then 1.6 viewports of slide),
+    // shoving the Key Facts content out to the left. Once Services is docked
+    // it holds briefly, then its light backdrop dissolves into the live world
+    // underneath (--world 0 -> 1 over 2 viewports) while the giant service
+    // words stay dead-center. Both vars live on the keyfacts sheet so the
+    // Services overlay inherits them. Fully reversible, scrubbed by scroll.
+    if (kf && svc && kfLandY != null) {
+      const y = window.scrollY - kfLandY;
+      const push = smooth(Math.min(Math.max((y - 0.4 * vh) / (1.6 * vh), 0), 1));
+      const fw = smooth(Math.min(Math.max((y - 2.4 * vh) / (2 * vh), 0), 1));
+      kf.style.setProperty("--push", push.toFixed(3));
+      kf.style.setProperty("--world", fw.toFixed(3));
+      svc.classList.toggle("docked", push > 0.98);
+      // flip the service text light once the world underneath dominates
+      svc.classList.toggle("in-world", fw > 0.35);
+      // wake the world scene one full viewport BEFORE the dissolve can start,
+      // so its first visible frame is never delayed or frozen — and put it
+      // back to sleep only when scrolled well above that line. Stateless
+      // (recomputed from scrollY every frame), so it can never get stuck.
+      const fwEl = document.getElementById("focusWorld");
+      if (fwEl) fwEl.dataset.paused = y > 1.4 * vh ? "0" : "1";
     }
   }
   const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
