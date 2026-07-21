@@ -8,13 +8,13 @@ import { NOISE_GLSL } from "./noise.js";
 const RIBBONS = [
   // y, z, length, thickness, z-tilt, flow speed, intensity — a fan filling
   // the upper sky, dipping toward the bright right horizon
-  { y: 40, z: -195, len: 480, th: 30, tilt: -0.1, speed: 0.045, i: 0.5 },
-  { y: 38, z: -190, len: 460, th: 24, tilt: -0.103, speed: 0.06, i: 0.6 },
-  { y: 36, z: -185, len: 440, th: 20, tilt: -0.098, speed: 0.075, i: 0.7 },
-  { y: 34, z: -180, len: 420, th: 15, tilt: -0.096, speed: 0.09, i: 0.75 },
+  { y: 40, z: -195, len: 480, th: 30, tilt: -0.1, speed: 0.09, i: 0.75 },
+  { y: 38, z: -190, len: 460, th: 24, tilt: -0.103, speed: 0.12, i: 0.85 },
+  { y: 36, z: -185, len: 440, th: 20, tilt: -0.098, speed: 0.15, i: 0.95 },
+  { y: 34, z: -180, len: 420, th: 15, tilt: -0.096, speed: 0.18, i: 1.0 },
   // two brighter lines riding the pack — kept wide enough to stay soft
-  { y: 32, z: -175, len: 400, th: 12, tilt: -0.094, speed: 0.1, i: 0.85 },
-  { y: 39, z: -192, len: 460, th: 16, tilt: -0.101, speed: 0.05, i: 0.75 },
+  { y: 32, z: -175, len: 400, th: 12, tilt: -0.094, speed: 0.2, i: 1.1 },
+  { y: 39, z: -192, len: 460, th: 16, tilt: -0.101, speed: 0.1, i: 1.0 },
 ];
 
 export function createLightStreaks(scene) {
@@ -58,13 +58,18 @@ export function createLightStreaks(scene) {
           float band = exp(-d * 5.5);
           // light flowing along it — the aurora shimmer, pushed faster and
           // punchier so the motion actually reads instead of just glowing
-          float flow = fbm(vec3(vUv.x * 4.5 - uTime * uSpeed * 26.0, vUv.y * 2.0, uTime * 0.08));
-          flow = 0.55 + 0.75 * smoothstep(0.0, 0.6, flow);
+          float flow = fbm(vec3(vUv.x * 4.5 - uTime * uSpeed * 40.0, vUv.y * 2.0, uTime * 0.12));
+          flow = 0.65 + 0.9 * smoothstep(0.0, 0.6, flow);
+          // a second, sharper streak of light runs along the ribbon on top
+          // of the base flow — a bright pulse that visibly travels rather
+          // than just a shimmering glow in place
+          float pulse = fbm(vec3(vUv.x * 3.0 - uTime * uSpeed * 55.0, vUv.y * 3.0, uTime * 0.2 + 4.0));
+          pulse = smoothstep(0.55, 0.95, pulse);
           // fade the ends so ribbons never cut off hard
           float ends = smoothstep(0.0, 0.08, vUv.x) * smoothstep(1.0, 0.9, vUv.x);
-          float a = band * ends * flow * uIntensity * 0.55;
-          a = min(a, 0.7);
-          vec3 col = mix(vec3(0.0, 0.5, 0.44), vec3(0.05, 0.85, 0.72), band * 0.5);
+          float a = band * ends * (flow + pulse * 0.9) * uIntensity * 0.7;
+          a = min(a, 1.0);
+          vec3 col = mix(vec3(0.0, 0.55, 0.48), vec3(0.15, 0.95, 0.82), band * 0.5 + pulse * 0.3);
           gl_FragColor = vec4(col * a, a);
         }
       `,

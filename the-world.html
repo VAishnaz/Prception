@@ -12,27 +12,14 @@
   html, body { width: 100%; background: #020808; }
 
   /* pin demo: mirrors how the section pins inside index.html — the stage
-     holds one frozen viewport while ~250vh of scroll scrubs the jelly core's
-     arrival (small at top → tumbling + swelling → settled dead center) */
-  .track { height: 350vh; position: relative; }
+     holds one frozen viewport while ~400vh of scroll scrubs the story:
+     first half = the jelly core's arrival (small at top → tumbling +
+     swelling → settled dead center), second half = the sigil slowly
+     burning itself into the settled core */
+  .track { height: 500vh; position: relative; }
   .stage { position: sticky; top: 0; height: 100vh; overflow: hidden; }
   #world { position: absolute; inset: 0; }
 
-  .hint {
-    position: absolute; left: 50%; bottom: 2rem; z-index: 10;
-    transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
-    font-family: "Courier New", monospace; font-size: 0.62rem;
-    letter-spacing: 0.3em; text-transform: uppercase;
-    color: rgba(216, 230, 228, 0.55);
-    transition: opacity 0.6s ease; pointer-events: none;
-  }
-  .hint i {
-    display: block; width: 1px; height: 44px;
-    background: linear-gradient(to bottom, transparent, #1fe6dc);
-    animation: drip 2.2s ease-in-out infinite;
-  }
-  @keyframes drip { 0% { transform: scaleY(0); transform-origin: top; } 55% { transform: scaleY(1); transform-origin: top; } 56% { transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
 </style>
 </head>
 <body>
@@ -40,7 +27,6 @@
 <div class="track" id="track">
   <div class="stage">
     <div id="world"></div>
-    <div class="hint" id="hint"><span>Scroll</span><i></i></div>
   </div>
 </div>
 
@@ -60,14 +46,12 @@ const world = mountWorld(document.getElementById("world"));
 // scrub the energy core off scroll position over the pinned track — the same
 // progress value index.html's pinned section will feed via world.setScroll()
 const track = document.getElementById("track");
-const hint = document.getElementById("hint");
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function onScroll() {
   const range = track.offsetHeight - innerHeight;
   const p = range > 0 ? Math.min(Math.max(scrollY / range, 0), 1) : 1;
   world.setScroll(reduced ? 1 : p);
-  hint.style.opacity = p < 0.04 ? 1 : 0;
 }
 addEventListener("scroll", onScroll, { passive: true });
 onScroll();

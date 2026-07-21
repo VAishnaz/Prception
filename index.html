@@ -27,8 +27,8 @@
     --teal-soft: rgba(31, 230, 220, 0.5);
     --line: rgba(216, 216, 216, 0.14);
     --font-grot: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
-    --font-mono: "Martian Mono", "Courier New", monospace;
-    --font-display: "Instrument Serif", "Times New Roman", Georgia, serif;
+    --font-mono: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-inout: cubic-bezier(0.83, 0, 0.17, 1);
   }
@@ -38,7 +38,7 @@
   html, body {
     background: var(--bg);
     color: var(--ink);
-    font-family: "Neue Haas Grotesk Display Pro", "Helvetica Neue", "Inter Tight", Inter, Helvetica, Arial, sans-serif;
+    font-family: var(--font-grot);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
@@ -259,15 +259,30 @@
      (Only -100svh is pulled back up, so each transition owns 2 viewports
      of scroll and consecutive wipes never overlap.) */
   .pin::after { content: ""; display: block; height: 200svh; }
-  .intro + .pin, .pin + .pin, .pin + .work { margin-top: -100svh; }
+  .intro + .pin, .pin + .pin { margin-top: -100svh; }
+  /* Work must NOT be pulled up over the pin's tail: the last thing that
+     happens in .pin-keyfacts is the Craft in Motion section fading in as a
+     plain reveal (not a bar-covered wipe), so there's no 2nd viewport to
+     reclaim. Pulling Work up 100svh would slide it over Craft in Motion
+     while scrolling. Let Work start cleanly after the pin ends instead. */
+  .pin + .work { margin-top: 0; }
   /* Key Facts' pin carries extra hold: 200svh for its own arrival (wipe1),
      then 200svh where the Services sheet PUSHES in from the right shoving
      the Key Facts content out, then 200svh where Services' light backdrop
-     dissolves into the live world underneath (--world) — plus a 60svh
-     buffer so the dissolve is fully settled before Work's own approach
-     (wipe3) starts covering the screen; without it the transitions visibly
-     overlap. */
-  .pin-keyfacts::after { height: 700svh; }
+     dissolves into the live world underneath (--world), then ~650svh where
+     the energy core drops in from above — shattering the service words row
+     by row on its way down — settles dead-center and burns the sigil in
+     (scrubbed via world.setScroll, slowed down for a more deliberate
+     scrub) — the glass service cards climb their edge half-circles on
+     that SAME scrub, starting and ending exactly when the burn does — then
+     a 100svh dead zone (lets the core's lagged internal progress actually
+     finish converging before anything new starts moving), then 250svh where
+     the world camera pushes in toward the settled core while the (currently
+     blank) next section fades in over it — then 500svh where the Design in
+     Motion shot wheel spins its cards along the arc (see .dm-ring / the
+     DM_START scrub) — plus buffer so it's all settled before Work appears;
+     without it the transitions visibly overlap or get cut short mid-push. */
+  .pin-keyfacts::after { height: 2300svh; }
 
   /* ---- trionn stepped wipe ----
      Each transition has a FIXED full-viewport stack of bars (.wipe) sitting
@@ -287,7 +302,7 @@
     background: #edefec;
   }
   .wipe-dark i { background: var(--bg-2); }
-  #wipe1 { z-index: 5; } #wipe2 { z-index: 7; } #wipe3 { z-index: 9; }
+  #wipe1 { z-index: 5; }
   /* the buried sheet sinks away underneath: recedes + dims while covered */
   .stage, .keyfacts {
     transform: scale(calc(1 - var(--bury, 0)));
@@ -446,7 +461,7 @@
     pointer-events: none;
   }
   .services.docked { pointer-events: auto; }
-  .svc-world { position: absolute; inset: 0; z-index: 0; }
+  .svc-world { position: absolute; inset: 0; z-index: 0; will-change: transform; }
   .svc-world canvas { display: block; width: 100%; height: 100%; }
   /* the light backdrop: covers the world canvas until the dissolve
      (--world 0 -> 1) fades it away, leaving the text over the live world */
@@ -479,6 +494,45 @@
     line-height: 0.84; letter-spacing: -0.035em; text-transform: uppercase;
     white-space: nowrap;
   }
+  /* per-letter spans (split by JS) so the falling energy core can knock the
+     words apart — each letter carries its own scroll-scrubbed transform */
+  .svc-stack .ltr { display: inline-block; will-change: transform, opacity; }
+  /* the .krv line masks (overflow:hidden) would clip the flying letters —
+     released the moment the first impact lands (arrival reveal long done) */
+  .services.shattering .svc-stack .krv { overflow: visible; }
+  /* ---- glass service cards on edge-hugging half-circle arcs ----
+     positioned entirely by JS (scroll-scrubbed): each card rides a
+     vertical semicircle at its screen edge — offscreen at the bottom,
+     swung furthest inward at mid-height, gone again at the top */
+  .svc-orbit { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+  .svc-card {
+    position: absolute; top: 0; left: 0;
+    width: min(360px, 40vw); height: 190px;
+    padding: 1.5rem 1.7rem; border-radius: 18px;
+    display: flex; flex-direction: column;
+    background: linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.04));
+    border: 1px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(10px) saturate(1.35);
+    -webkit-backdrop-filter: blur(10px) saturate(1.35);
+    box-shadow: 0 10px 44px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.28);
+    color: #eef0ee; opacity: 0; will-change: transform, opacity;
+  }
+  .svc-card-num {
+    font-family: var(--font-mono); font-size: 0.66rem;
+    letter-spacing: 0.14em; color: var(--teal); flex: none;
+  }
+  .svc-card h3 {
+    margin: 0.5rem 0 0.4rem; flex: none;
+    font-family: var(--font-grot); font-size: clamp(1.25rem, 2.1vw, 1.7rem);
+    font-weight: 700; letter-spacing: -0.015em;
+    line-height: 1.15;
+  }
+  .svc-card p {
+    margin: 0; font-size: 0.85rem; line-height: 1.5;
+    color: rgba(238,240,238,0.72);
+    display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
   .svc-foot {
     position: relative; width: 100%;
     display: flex; align-items: baseline; justify-content: center;
@@ -494,29 +548,249 @@
   }
   .svc-view:hover { color: var(--teal); }
 
+  /* ---- NEXT SECTION (placeholder) ----
+     Shares the exact same pinned rect as .services (absolute, inset:0).
+     Reveals as a zoom-through: it starts scaled up + invisible (as if just
+     behind the core, filling the frame), then eases down to its resting
+     scale while fading in — scrubbed 1:1 with --approach (0 -> 1) from the
+     scroll script, no CSS transition, so it stays glued to scroll position
+     like the rest of the world/services scrub. The svc-world canvas gets a
+     matching scale-up over the same span (see .services.approaching) so the
+     core visually swells to fill the screen right as this takes over —
+     reads as punching through the core into the new section. */
+  .next-section {
+    --dm-strip-h: 40svh; /* shared with .dm-strip / .dm-note / .dm-link below */
+    position: absolute; inset: 0; z-index: 5;
+    background: #0a0a0a;
+    color: #e8e8e6;
+    overflow: hidden;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transform: scale(1.35);
+    will-change: transform, opacity;
+    /* shared vanishing point for the shot cylinder — cards translateZ toward
+       / away from this, so the crown card looms and the rim cards recede */
+    perspective: 1500px;
+    perspective-origin: 60% 62%;
+  }
+  .next-section.live { pointer-events: auto; }
+
+  /* ---- CRAFT IN MOTION (straight bottom filmstrip, 3dyco-style) ----
+     The headline sits high in the frame (both lines pushed up near the top),
+     sub/note/link sit in a row just above the filmstrip, and the filmstrip
+     itself is a plain straight row of images docked to the very bottom edge.
+     On scroll the strip's track slides horizontally (driven by --dm, same
+     progress source as before); scroll VELOCITY (from Lenis) drives a
+     skewX() "wind" shear on the track so it leans over at speed and relaxes
+     back flat at rest — see the script block near .dm-strip below. */
+  .dm-title { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+  .dm-line {
+    position: absolute;
+    font-family: var(--font-grot); font-weight: 500;
+    font-size: clamp(2.8rem, 7.2vw, 9rem);
+    line-height: 0.94; letter-spacing: -0.02em; text-transform: uppercase;
+    color: #f2f2ef; white-space: nowrap; will-change: transform;
+  }
+  /* CRAFT starts hard RIGHT and slides LEFT toward centre as dm -> 1;
+     IN MOTION starts hard LEFT and slides RIGHT toward centre. Both lines
+     live in the top third of the frame now, well clear of the strip. */
+  .dm-line-1 { top: 4svh; right: 3vw; transform: translateX(calc(var(--dm, 0) * -30vw)); }
+  .dm-line-2 { top: 16svh; left: 3vw; transform: translateX(calc(var(--dm, 0) * 30vw)); }
+  .dm-sub {
+    position: absolute; top: 30svh; left: 50%; transform: translateX(-50%);
+    text-align: center; z-index: 3;
+    font-family: var(--font-grot); font-size: clamp(0.72rem, 0.95vw, 1rem);
+    font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+    color: #b9bab5;
+  }
+  /* note (left) + link (right) now sit as a row directly ABOVE the
+     filmstrip, not pinned to the section bottom, since the strip itself
+     owns the bottom edge. */
+  .dm-note {
+    position: absolute; left: 3vw; bottom: calc(var(--dm-strip-h, 30svh) + 2.2rem); max-width: 22rem; z-index: 3;
+    font-size: clamp(0.95rem, 1.15vw, 1.2rem); line-height: 1.35;
+    letter-spacing: -0.01em; color: #cfd0cc;
+  }
+  .dm-link {
+    position: absolute; right: 3vw; bottom: calc(var(--dm-strip-h, 30svh) + 2.4rem); z-index: 3;
+    font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #e8e8e6;
+  }
+  .dm-link .dm-rv > * { border-bottom: 1px solid currentColor; padding-bottom: 0.5rem; }
+  .dm-link:hover { color: #00978d; }
+  /* masked line reveals — armed by .dm-in the moment the zoom-through
+     wash lands, released (replayable) when scrolled back out */
+  .dm-rv { display: block; overflow: hidden; }
+  .dm-rv > * {
+    display: block; transform: translateY(112%);
+    transition: transform 1s var(--ease-inout);
+    transition-delay: var(--d, 0s);
+  }
+  .dm-in .dm-rv > * { transform: translateY(0); }
+
+  /* ---- straight bottom filmstrip ---- */
+  .dm-strip {
+    position: absolute; left: 0; right: 0; bottom: 0; height: var(--dm-strip-h, 26svh);
+    z-index: 2; overflow: visible;
+  }
+  .dm-track {
+    position: absolute; inset: 0;
+    display: flex; align-items: stretch;
+    /* real gap between tiles (3dyco reference has visible space, not an
+       edge-to-edge cloth) */
+    gap: clamp(10px, 1.6vw, 26px);
+    width: max-content; will-change: transform;
+    transform: translate3d(var(--dm-x, 0px), 0, 0) skewX(var(--dm-skew, 0deg));
+    transform-origin: 50% 100%;
+  }
+  .dm-tile {
+    position: relative; flex: 0 0 auto;
+    width: clamp(360px, 34vw, 560px); height: 100%;
+    background-size: cover; background-position: center;
+    transform: scale(1) translateX(0);
+    transform-origin: center center;
+    /* slow, smooth grow-in so the expansion reads as an easing push rather
+       than a snap; the same duration is used for the neighbour shove below
+       so both motions land together. A gentle, evenly-weighted ease (not
+       --ease-inout, which is a very steep S-curve elsewhere on this page
+       and reads as an abrupt snap through the middle of the transition). */
+    transition: transform 1.1s cubic-bezier(0.22, 1, 0.36, 1), z-index 0s 1.1s;
+    z-index: 1;
+  }
+  /* hover: this tile grows well past the strip's own height/width and sits
+     above its neighbours; the rest of the row stays in full colour (no
+     grayscale dim) so only the size/position change reads as the focus. */
+  .dm-tile:hover {
+    transform: scale(1.35) translateX(0);
+    z-index: 5;
+    transition: transform 1.1s cubic-bezier(0.22, 1, 0.36, 1), z-index 0s;
+  }
+  /* neighbours get physically shoved aside as the hovered tile grows, like
+     it's pushing them out of the way rather than just floating over them —
+     the tile immediately to the LEFT of the hovered one slides further
+     left, the one immediately to the RIGHT slides further right. Sibling
+     selectors only reach the very next tile in DOM order (the one after),
+     so the "tile before" case is covered via :has() on the general sibling
+     combinator instead.
+     The hovered tile grows to scale(1.35) from its CENTRE, so each edge
+     pushes out by 17.5% of ITS OWN width past the gap. translateX here is
+     expressed as a % of the NEIGHBOUR's own width (percentage transforms
+     are relative to the element's own box, not the hovered one's); since
+     neighbouring tiles share the same base width, matching that same 17.5%
+     only cancels the overshoot exactly — edges land flush with zero gap,
+     which reads as overlapping. Push a bit further (22%) so the strip's
+     normal resting gap is preserved instead of eaten. */
+  .dm-tile:hover + .dm-tile {
+    transform: scale(1) translateX(22%);
+  }
+  .dm-tile:hover + .dm-tile + .dm-tile {
+    transform: scale(1) translateX(8%);
+  }
+  .dm-tile:has(+ .dm-tile:hover) {
+    transform: scale(1) translateX(-22%);
+  }
+  .dm-tile:has(+ .dm-tile + .dm-tile:hover) {
+    transform: scale(1) translateX(-8%);
+  }
+  .dm-tile-label {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 1.2rem;
+    font-family: var(--font-grot); font-weight: 600;
+    font-size: clamp(1rem, 1.3vw, 1.4rem);
+    letter-spacing: 0.02em; text-transform: uppercase;
+    color: #fff; text-shadow: 0 2px 18px rgba(0,0,0,0.55);
+    background: linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.35));
+    opacity: 0; transition: opacity 0.4s var(--ease-inout);
+    pointer-events: none;
+  }
+  .dm-tile:hover .dm-tile-label { opacity: 1; }
+  @media (max-width: 640px) {
+    .next-section { --dm-strip-h: 30svh; }
+    .dm-tile { width: clamp(220px, 68vw, 320px); }
+    .dm-tile:hover { transform: scale(1.18); }
+  }
+
   /* ============================================================
      WORK
      ============================================================ */
   .work {
     position: relative; z-index: 10;
-    min-height: 100svh;
-    padding: 9rem 2rem 7rem; background: var(--bg-2); color: var(--ink);
+    background: var(--bg-2); color: var(--ink);
   }
-  .work-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3.5rem; }
-  .work-head h2 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.02em; text-transform: uppercase; }
-  .work-head .idx { font-size: 0.75rem; letter-spacing: 0.2em; color: var(--ink-faint); }
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; }
-  .tile {
-    aspect-ratio: 4 / 3; border: 1px solid var(--line); border-radius: 4px;
-    position: relative; overflow: hidden;
-    background:
-      radial-gradient(ellipse 90% 90% at 30% 110%, rgba(31,230,220,0.08), transparent 60%),
-      linear-gradient(160deg, #10161b, #0a0e11);
-    transition: border-color 0.4s ease;
+  /* trionn "Selected work & explorations": the section is TALL for scroll
+     distance; a sticky stage pins to the viewport. Cards travel like a
+     conveyor: each enters from the bottom-RIGHT, rises to centre-right,
+     then exits left — and the heading itself slides off to the left as the
+     first cards take over (exactly the trionn homepage motion). */
+  .work-stage {
+    position: sticky; top: 0; height: 100svh; overflow: hidden;
+    display: grid; grid-template-columns: 0.8fr 1.2fr; align-items: center;
+    gap: 2rem; padding: 0 2.5rem;
   }
-  .tile:hover { border-color: rgba(31,230,220,0.4); }
-  .tile .label { position: absolute; left: 1.1rem; bottom: 1rem; font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); }
-  .tile .num { position: absolute; right: 1.1rem; top: 0.9rem; font-size: 0.7rem; letter-spacing: 0.15em; color: var(--ink-faint); }
+  .work-left {
+    position: relative; z-index: 1;
+    will-change: transform, opacity;  /* JS scrubs it left as cards advance */
+  }
+  .work-left h2 {
+    font-size: clamp(2.4rem, 5.2vw, 4.6rem); font-weight: 700;
+    letter-spacing: -0.03em; line-height: 0.98;
+  }
+  .work-left .view-all {
+    display: inline-flex; align-items: center; gap: 0.7rem; margin-top: 2.2rem;
+    font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-dim); text-decoration: none; width: max-content;
+    border-bottom: 1px solid var(--line); padding-bottom: 0.5rem;
+    transition: color 0.3s ease, border-color 0.3s ease;
+  }
+  .work-left .view-all span { transition: transform 0.35s var(--ease-out); }
+  .work-left .view-all:hover { color: var(--teal); border-color: var(--teal-soft); }
+  .work-left .view-all:hover span { transform: translateX(5px); }
+
+  /* cards are positioned by JS: enter bottom-right, centre, exit left.
+     The viewport spans the WHOLE stage (not just the right column) so a
+     card can travel across and out the left edge like on trionn. */
+  .work-viewport { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+  .work-track { position: absolute; inset: 0; }
+  .work-card {
+    position: absolute; left: 50%; top: 50%;
+    width: 42vw; max-width: 720px;
+    text-decoration: none; color: var(--ink);
+    will-change: transform, opacity;
+    pointer-events: auto;
+  }
+  .work-card .wc-media {
+    position: relative; width: 100%; aspect-ratio: 16 / 10;
+    border-radius: 10px; overflow: hidden; background: #05080a;
+    border: 1px solid var(--line); box-shadow: 0 30px 70px rgba(0,0,0,0.5);
+  }
+  .work-card .wc-media video {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .work-card .wc-foot {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 1.5rem; margin-top: 1.4rem;
+  }
+  .work-card .wc-title { font-size: clamp(1.4rem, 2.6vw, 2.1rem); font-weight: 700; letter-spacing: -0.02em; }
+  .work-card .wc-desc { margin-top: 0.5rem; font-size: 0.92rem; color: var(--ink-dim); max-width: 30ch; line-height: 1.45; }
+  .work-card .wc-cta {
+    white-space: nowrap; font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-faint); display: inline-flex; align-items: center; gap: 0.6rem;
+    transition: color 0.3s ease;
+  }
+  .work-card .wc-cta span { transition: transform 0.35s var(--ease-out); }
+  .work-card:hover .wc-cta { color: var(--teal); }
+  .work-card:hover .wc-cta span { transform: translateX(4px); }
+
+  @media (max-width: 860px) {
+    /* mobile: drop the horizontal scrub, fall back to a simple stacked list */
+    .work { min-height: auto !important; }
+    .work-stage { position: static; height: auto; display: block; overflow: visible; padding: 5rem 1.2rem; }
+    .work-left { margin-bottom: 2.5rem; }
+    .work-viewport { position: static; height: auto; }
+    .work-track { position: static; display: flex; flex-direction: column; gap: 3.5rem; }
+    .work-card { position: static; width: 100%; max-width: none; transform: none !important; opacity: 1 !important; }
+    .work-card .wc-foot { flex-direction: column; gap: 0.9rem; }
+  }
 
   footer {
     display: flex; justify-content: space-between; padding: 2rem;
@@ -537,6 +811,12 @@
     .svc-ui { padding-left: 1.2rem; padding-right: 1.2rem; }
     .svc-foot { flex-direction: column; align-items: center; gap: 0.9rem; }
     .svc-view { position: static; }
+    .dm-line { font-size: 13vw; }
+    .dm-line-1 { right: 4vw; top: 4svh; transform: translateX(calc(var(--dm, 0) * -12vw)); }
+    .dm-line-2 { left: 4vw; top: 15svh; bottom: auto; transform: translateX(calc(var(--dm, 0) * 12vw)); }
+    .dm-sub { top: 25svh; }
+    .dm-note { left: 1.2rem; bottom: calc(var(--dm-strip-h, 22svh) + 1.4rem); max-width: 17rem; }
+    .dm-link { right: 1.2rem; bottom: calc(var(--dm-strip-h, 22svh) + 1.6rem); }
   }
   @media (max-width: 900px) and (min-width: 641px) {
     .kf-cards { grid-template-columns: 1fr; max-width: 460px; margin: 0 auto; }
@@ -554,6 +834,14 @@
     /* Services becomes a plain static section after Key Facts */
     .services { position: static; height: auto; min-height: 100svh; pointer-events: auto; }
     .svc-bg { opacity: 1; }
+    .next-section { position: static; opacity: 1 !important; visibility: visible !important; min-height: 60svh; padding: 3rem 1.2rem 4rem; }
+    /* Craft in Motion flattens into a plain stacked section: headline,
+       subtitle, note, link in flow; the filmstrip holds a static, unskewed
+       frame with no scroll-driven translate */
+    .dm-title, .dm-line, .dm-sub, .dm-note, .dm-link { position: static; transform: none !important; }
+    .dm-rv > * { transform: none !important; transition: none !important; }
+    .dm-strip { position: relative; width: 100%; height: 40svh; margin-top: 2rem; }
+    .dm-track { transform: none !important; }
     .kf-push { transform: none !important; opacity: 1 !important; }
     .krv > *, .kf-cap { transform: none !important; transition: none !important; opacity: 1 !important; }
     .kf-row::before { transform: none !important; transition: none !important; }
@@ -727,14 +1015,51 @@
     <div class="svc-ui kf-anim">
       <span class="svc-label"><span class="tick">&#10022;</span> Our Services</span>
       <div class="svc-stack">
-        <span class="krv"><span>A.I.</span></span>
-        <span class="krv" style="--d:0.08s"><span>Design</span></span>
+        <span class="krv"><span>SEO</span></span>
+        <span class="krv" style="--d:0.08s"><span>Branding</span></span>
         <span class="krv" style="--d:0.16s"><span>Development</span></span>
-        <span class="krv" style="--d:0.24s"><span>Branding</span></span>
+        <span class="krv" style="--d:0.24s"><span>Strategy</span></span>
       </div>
       <div class="svc-foot">
         <span><span class="tick">&#10022;</span> Built with intent. Built to work.</span>
         <a class="svc-view" href="#work">View Services <span>&rarr;</span></a>
+      </div>
+    </div>
+    <!-- glass service cards: after the sigil burn, the same scroll scrub
+         sweeps each service in on a vertically-oriented half-circle arc
+         hugging the screen edge — left cards orbit the left edge, right
+         cards the right, rising bottom-to-top past the settled core.
+         aria-hidden: the services are already named in .svc-stack above. -->
+    <div class="svc-orbit" aria-hidden="true">
+      <div class="svc-card" data-side="-1"><span class="svc-card-num">( 01 )</span><h3>Branding</h3><p>Identity systems that give a company a distinct, memorable voice.</p></div>
+      <div class="svc-card" data-side="1"><span class="svc-card-num">( 02 )</span><h3>Web development</h3><p>Fast, well-built sites and apps that hold up in production.</p></div>
+      <div class="svc-card" data-side="-1"><span class="svc-card-num">( 03 )</span><h3>SEO</h3><p>Technical and content work that earns durable organic visibility.</p></div>
+      <div class="svc-card" data-side="1"><span class="svc-card-num">( 04 )</span><h3>Creator / influencer marketing</h3><p>Partnerships that put a brand in front of the right audience.</p></div>
+      <div class="svc-card" data-side="-1"><span class="svc-card-num">( 05 )</span><h3>Digital strategy</h3><p>The roadmap connecting brand, product &amp; channel decisions.</p></div>
+      <div class="svc-card" data-side="1"><span class="svc-card-num">( 06 )</span><h3>Performance &amp; growth marketing</h3><p>Paid, lifecycle &amp; conversion work measured against real numbers.</p></div>
+      <div class="svc-card" data-side="-1"><span class="svc-card-num">( 07 )</span><h3>UI/UX &amp; digital experience design</h3><p>Interfaces designed around how people actually use them.</p></div>
+      <div class="svc-card" data-side="1"><span class="svc-card-num">( 08 )</span><h3>Brand consulting &amp; brand architecture</h3><p>Structuring how a company's brands and sub-brands relate.</p></div>
+    </div>
+    <!-- ================= NEXT (placeholder) — revealed as the world camera
+         finishes its scroll-driven push toward the settled energy core,
+         right after the sigil burn + service card relay finish. Sits over
+         the same pinned rect as Services and just fades in. Empty for now. ================= -->
+    <div class="next-section" id="nextSection" aria-hidden="true">
+      <h2 class="dm-title" aria-label="Craft in motion">
+        <span class="dm-line dm-line-1"><span class="dm-rv"><span>Craft</span></span></span>
+        <span class="dm-line dm-line-2"><span class="dm-rv" style="--d:0.12s"><span>In&nbsp;Motion</span></span></span>
+      </h2>
+      <p class="dm-sub"><span class="dm-rv" style="--d:0.24s"><span>Branding &amp; identity<br />systems we&rsquo;ve shaped.</span></span></p>
+      <p class="dm-note"><span class="dm-rv" style="--d:0.32s"><span>Selected brand work &mdash; logos, identity systems, and visual language built for clarity and impact.</span></span></p>
+      <a class="dm-link" href="#work"><span class="dm-rv" style="--d:0.4s"><span>View all work&nbsp;&nbsp;&rarr;</span></span></a>
+      <!-- straight bottom filmstrip: plain DOM image tiles, edge-to-edge,
+           docked to the section's bottom edge. Track position (--dm-x) is
+           driven by scroll (see script below); track skew (--dm-skew) is
+           driven by Lenis scroll VELOCITY for the momentary "wind lean"
+           seen on fast scroll, easing back to 0 at rest. Swap the
+           background-image list in the script for real project photos. -->
+      <div class="dm-strip" id="dmStrip" aria-hidden="true">
+        <div class="dm-track" id="dmTrack"></div>
       </div>
     </div>
   </div>
@@ -743,16 +1068,61 @@
 
 <!-- ================= WORK ================= -->
 <section class="work" id="work">
-  <div class="work-head">
-    <h2>Selected Work</h2>
-    <span class="idx">( 01 &mdash; 04 )</span>
-  </div>
-  <div class="tiles">
-    <div class="tile"><span class="num">01</span><span class="label">Brand Systems</span></div>
-    <div class="tile"><span class="num">02</span><span class="label">Motion &amp; 3D</span></div>
-    <div class="tile"><span class="num">03</span><span class="label">Interactive</span></div>
-    <div class="tile"><span class="num">04</span><span class="label">Film &amp; Content</span></div>
-  </div>
+  <!-- sticky stage: pins to the viewport; the track inside scrubs horizontally -->
+  <div class="work-stage" id="workStage">
+    <div class="work-left">
+      <h2>Selected work<br>&amp; explorations</h2>
+      <a class="view-all" href="#work">View all projects <span>&rarr;</span></a>
+    </div>
+
+    <!-- right viewport: horizontal track of cards slid left by scroll -->
+    <div class="work-viewport">
+    <div class="work-track" id="workTrack">
+      <a class="work-card" href="#work">
+        <div class="wc-media"><video data-src="assets/videos/Brightwyn.mp4" muted loop playsinline preload="none"></video></div>
+        <div class="wc-foot">
+          <div><div class="wc-title">Brightwyn</div><p class="wc-desc">Brand system and visual language built for clarity and impact.</p></div>
+          <span class="wc-cta">Explore project <span>&rarr;</span></span>
+        </div>
+      </a>
+      <a class="work-card" href="#work">
+        <div class="wc-media"><video data-src="assets/videos/noblebrew.mp4" muted loop playsinline preload="none"></video></div>
+        <div class="wc-foot">
+          <div><div class="wc-title">Noblebrew</div><p class="wc-desc">Identity design with a crafted, characterful presence.</p></div>
+          <span class="wc-cta">Explore project <span>&rarr;</span></span>
+        </div>
+      </a>
+      <a class="work-card" href="#work">
+        <div class="wc-media"><video data-src="assets/videos/Tealcore.mp4" muted loop playsinline preload="none"></video></div>
+        <div class="wc-foot">
+          <div><div class="wc-title">Tealcore</div><p class="wc-desc">Motion &amp; 3D exploration driving an energetic brand story.</p></div>
+          <span class="wc-cta">Explore project <span>&rarr;</span></span>
+        </div>
+      </a>
+      <a class="work-card" href="#work">
+        <div class="wc-media"><video data-src="assets/videos/lynklead_video.mp4" muted loop playsinline preload="none"></video></div>
+        <div class="wc-foot">
+          <div><div class="wc-title">Lynklead</div><p class="wc-desc">Interactive product experience simplifying lead workflows.</p></div>
+          <span class="wc-cta">Explore project <span>&rarr;</span></span>
+        </div>
+      </a>
+      <a class="work-card" href="#work">
+        <div class="wc-media"><video data-src="assets/videos/saki.mp4" muted loop playsinline preload="none"></video></div>
+        <div class="wc-foot">
+          <div><div class="wc-title">Saki</div><p class="wc-desc">Film &amp; content shaping a warm, considered narrative.</p></div>
+          <span class="wc-cta">Explore project <span>&rarr;</span></span>
+        </div>
+      </a>
+      <a class="work-card" href="#work">
+        <div class="wc-media"><video data-src="assets/videos/staton.mp4" muted loop playsinline preload="none"></video></div>
+        <div class="wc-foot">
+          <div><div class="wc-title">Staton</div><p class="wc-desc">Brand system engineered for a confident, modern edge.</p></div>
+          <span class="wc-cta">Explore project <span>&rarr;</span></span>
+        </div>
+      </a>
+    </div><!-- /.work-track -->
+    </div><!-- /.work-viewport -->
+  </div><!-- /.work-stage -->
 </section>
 
 <footer>
@@ -760,11 +1130,11 @@
   <span>Made with perception</span>
 </footer>
 
-<!-- stepped wipes: fixed bar stacks that cover each section before the next reveals.
-     (Key Facts -> Focused Vision has no wipe2 bars anymore — that transition is a
-     plain fade into the live 3D world instead, see --world below.) -->
+<!-- stepped wipe: fixed bar stack that covers the hero before Key Facts reveals.
+     (Every transition after this is a plain fade/scrub instead — Key Facts ->
+     Services is a push, Services -> world is a dissolve, world -> next section
+     is the camera approach — no bar-cover wipe.) -->
 <div class="wipe" id="wipe1" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-<div class="wipe wipe-dark" id="wipe3" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 
 <!-- ============ 3D glass logo (Three.js) ============ -->
 <script type="importmap">
@@ -775,6 +1145,11 @@
   }
 }
 </script>
+<!-- GSAP: only the Craft in Motion helix uses this (as a scrub-driven
+     tween, NOT a ScrollTrigger pin — the section already lives inside the
+     page's own big .pin-keyfacts sticky pin, and a second independent
+     ScrollTrigger pin nested inside that would fight it). -->
+<script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js"></script>
 <script type="module">
 import * as THREE from "three";
 
@@ -1445,7 +1820,11 @@ animate();
 <!-- ============ Services background: the 3D world ============ -->
 <script type="module">
 import { mountWorld } from "./js/world/world.js";
-mountWorld(document.getElementById("focusWorld"));
+// handle kept global: the pin script below scrubs the energy core's arrival
+// (world.setScroll) off the same kfLandY anchor that drives the dissolve
+window.__world = mountWorld(document.getElementById("focusWorld"));
+// reduced motion: no scrub — the core sits settled with the sigil burned in
+if (matchMedia("(prefers-reduced-motion: reduce)").matches) window.__world.setScroll(1);
 </script>
 
 <!-- ============ Lenis smooth / inertial scroll ============ -->
@@ -1455,7 +1834,7 @@ mountWorld(document.getElementById("focusWorld"));
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduced || typeof Lenis === "undefined") return;
   const lenis = new Lenis({
-    duration: 1.15,
+    duration: 0.85,
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     smoothWheel: true,
     touchMultiplier: 1.2,
@@ -1681,12 +2060,36 @@ mountWorld(document.getElementById("focusWorld"));
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduced) return;
   const kf = document.getElementById("keyfacts"), svc = document.getElementById("services"),
-        wk = document.getElementById("work");
+        wk = document.getElementById("work"), nextSection = document.getElementById("nextSection");
+
+  /* ---- energy-core arrival + word shatter prep ----
+     Split each giant service word into per-letter spans once, up front (the
+     .krv arrival reveal animates the parent line, so the split is invisible
+     to it). As the core falls through the stack, each row shatters on
+     impact: letters left of the punch point fly left, right ones fly right,
+     center letters first — scrubbed, fully reversible. */
+  const svcRows = svc ? Array.from(svc.querySelectorAll(".svc-stack .krv > *")).map((word) => {
+    const text = word.textContent;
+    word.textContent = "";
+    return Array.from(text, (ch) => {
+      const s = document.createElement("span");
+      s.className = "ltr";
+      s.textContent = ch;
+      word.appendChild(s);
+      return s;
+    });
+  }) : [];
+  const svcSoft = svc ? svc.querySelectorAll(".svc-label, .svc-foot") : [];
+  const svcCards = svc ? Array.from(svc.querySelectorAll(".svc-card")) : [];
+  // deterministic per-letter jitter — stable across frames, scrub-safe
+  const jit = (i, salt) => {
+    const x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  };
   const pairs = [
     // track: the in-flow element whose top edge measures the transition
     // (the .pin wrapper for sticky sheets; work sits in flow itself)
     { wipe: document.getElementById("wipe1"), sheet: kf, track: kf && kf.parentElement, under: document.querySelector(".stage") },
-    { wipe: document.getElementById("wipe3"), sheet: wk, track: wk, under: svc },
   ].filter((p) => p.wipe && p.sheet && p.track && p.under)
    .map((p) => ({ ...p, bars: Array.from(p.wipe.querySelectorAll("i")) }));
   const smooth = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
@@ -1754,12 +2157,275 @@ mountWorld(document.getElementById("focusWorld"));
       // (recomputed from scrollY every frame), so it can never get stuck.
       const fwEl = document.getElementById("focusWorld");
       if (fwEl) fwEl.dataset.paused = y > 1.4 * vh ? "0" : "1";
+
+      // ---- the energy core's scroll story (same anchor, after the dissolve)
+      // cp 0..1 over 5 viewports starting as the dissolve lands: the core
+      // drops in from above (energyCore travel 0.04-0.55), then the sigil
+      // burns in across the second half (0.58-1.0) once it sits center.
+      const cp = Math.min(Math.max((y - 4.6 * vh) / (6.5 * vh), 0), 1);
+      if (window.__world) window.__world.setScroll(cp);
+
+      // row impacts: the falling core reaches each stacked word in turn,
+      // top row first. Thresholds sit where the core VISIBLY crosses each
+      // line (its travel is front-loaded + display-smoothed, so they trail
+      // the raw curve). DUR is each row's full scatter window.
+      const HIT = [0.2, 0.26, 0.32, 0.38], DUR = 0.2;
+      svc.classList.toggle("shattering", cp > HIT[0]);
+      svcRows.forEach((letters, r) => {
+        const s = smooth(Math.min(Math.max((cp - HIT[r]) / DUR, 0), 1));
+        const mid = (letters.length - 1) / 2;
+        letters.forEach((el, i) => {
+          // the punch lands mid-word: center letters knocked out first, the
+          // scatter ripples outward letter by letter
+          const dc = Math.abs(i - mid) / Math.max(mid, 1);
+          const ls = Math.min(Math.max((s - dc * 0.35) / 0.65, 0), 1);
+          if (ls <= 0) {
+            if (el.style.transform) { el.style.transform = ""; el.style.opacity = ""; }
+            return;
+          }
+          const seed = i + r * 31;
+          const dir = i < mid ? -1 : i > mid ? 1 : (jit(seed, 1) < 0.5 ? -1 : 1);
+          // ballistic knock, not a glide: the sideways impulse is explosive
+          // (ease-out cubic — near-full speed at the first frame of impact,
+          // decelerating as it flies) while gravity accumulates quadratically
+          // and ends up owning the motion — each letter traces a real arc
+          const eo = 1 - Math.pow(1 - ls, 3);
+          // letters nearest the punch point take the hardest hit
+          const power = 0.55 + 0.45 * (1 - dc) + 0.35 * jit(seed, 2);
+          const fx = dir * power * 0.5 * innerWidth * eo;
+          // a small upward pop off the impact first, then the fall wins
+          const pop = (50 + 150 * jit(seed, 3)) * (1 - dc * 0.5);
+          const fy = -pop * eo + (430 + 280 * jit(seed, 5)) * ls * ls;
+          // spin matches the fling — knocked right tumbles clockwise, left
+          // counter-clockwise, harder hits spinning up to ~1.5 turns
+          const rot = dir * (90 + 440 * jit(seed, 4)) * power * eo;
+          // slight scale drift: some letters blow toward the viewer, some
+          // away — cheap depth that sells the burst as 3D debris
+          const sc = 1 + (jit(seed, 6) - 0.4) * 0.5 * eo;
+          el.style.transform = "translate(" + fx.toFixed(1) + "px," + fy.toFixed(1) + "px) rotate(" + rot.toFixed(1) + "deg) scale(" + sc.toFixed(3) + ")";
+          el.style.opacity = Math.max(1 - Math.max((ls - 0.7) / 0.3, 0), 0).toFixed(3);
+        });
+      });
+      // label + footer bow out with the first impact, leaving the settled
+      // core and its burning sigil alone in frame
+      const soft = Math.min(Math.max((cp - HIT[0]) / DUR, 0), 1);
+      svcSoft.forEach((el) => {
+        el.style.opacity = (1 - soft).toFixed(3);
+        el.style.visibility = soft >= 1 ? "hidden" : "";
+      });
+
+      // ---- glass service cards on half-circle arcs (same scrub as the
+      // sigil reveal, starting and ending together) ----
+      // uBurn (the shader's sigil reveal) is driven by the core's INTERNAL
+      // p, which lags raw cp behind a 0.07/frame lerp (see energyCore.js
+      // update()) — cards built off raw cp visibly climb before the burn
+      // has actually started rendering. window.__world.getScroll() reads
+      // that same lagged p directly, so cp2 tracks what's ACTUALLY on
+      // screen: cp2=0 the instant the burn starts rendering, cp2=1 the
+      // instant it finishes — cards and the logo reveal now start and end
+      // together for real, not just in the input math.
+      const realP = window.__world && window.__world.getScroll ? window.__world.getScroll() : cp;
+      const SHATTER_END = 0.58;
+      const cp2 = Math.min(Math.max((realP - SHATTER_END) / (1 - SHATTER_END), 0), 1);
+      // 4 cards share each edge as a relay: all 4 lanes run across the
+      // FULL cp2 0..1 span (so the whole queue starts when the burn starts
+      // and the last card clears out exactly when the burn finishes), but
+      // each lane's own visible arc is narrowed to 1/4 width and given a
+      // running start offset — so lane N+1 only becomes visible once lane
+      // N has fully cleared the top, guaranteeing no two same-side cards
+      // are ever on screen together, while the relay as a whole still
+      // spans the entire reveal from its first frame to its last.
+      const PER_SIDE = 4;
+      // Lanes overlap (lane N+1 starts before lane N fully clears, so
+      // consecutive cards on the same side are on screen together) but the
+      // whole relay is compressed into the FIRST 80% of cp2's 0..1 range —
+      // leaving the last 20% as a clean tail where every card has reached
+      // t=1 and cleared, so the zoom-in (which starts once cp2/realP
+      // finishes) never overlaps a still-visible card.
+      const RELAY_END = 0.8;
+      const LANE_STEP = RELAY_END / (PER_SIDE + 2); // < RELAY_END/4 so LANE_SPAN > LANE_STEP (lanes overlap)
+      const LANE_SPAN = RELAY_END - 3 * LANE_STEP;
+      svcCards.forEach((el, k) => {
+        const side = +el.dataset.side;
+        const lane = Math.floor(k / 2); // 0..3: this card's slot within its side's relay
+        const t = Math.min(Math.max((cp2 - lane * LANE_STEP) / LANE_SPAN, 0), 1);
+        if (t <= 0 || t >= 1) {
+          if (el.style.opacity !== "0") { el.style.opacity = "0"; el.style.transform = ""; }
+          return;
+        }
+        const phi = t * Math.PI;
+        const inward = Math.sin(phi) * Math.min(innerWidth * 0.26, 420);
+        const cw = el.offsetWidth, ch = el.offsetHeight;
+        // base sits mostly offscreen at the arc's ends
+        const x = side < 0 ? -cw * 0.55 + inward
+                           : innerWidth - cw * 0.45 - inward;
+        const cy = vh * (0.94 - 0.88 * t) - ch / 2;
+        el.style.transform = "translate(" + x.toFixed(1) + "px," + cy.toFixed(1) + "px)";
+        el.style.opacity = Math.min(1, Math.sin(phi) * 1.5).toFixed(3);
+      });
+
+      // ---- camera approach: starts after raw cp/y crosses 1 (11.1vh), with
+      // a short DEAD_ZONE first — realP (the core's lagged/rendered burn
+      // progress) only chases its target at 0.07/frame, so it needs a little
+      // real scroll time to actually finish converging. Starting the push
+      // right as raw cp hit 1 used to fire while realP — and the sigil burn
+      // + cards built off it — were still visibly settling, so the push and
+      // the settle overlapped and then jump-cut once realP caught up. A hard
+      // latch on realP was tried instead but its trigger point is
+      // scroll-speed-dependent, which made the run-up budget below
+      // (.pin-keyfacts::after) impossible to size correctly.
+      const DEAD_ZONE = 0.35 * vh;
+      const APPROACH_START = 11.1 * vh + DEAD_ZONE, APPROACH_LEN = 2.5 * vh;
+      const approach = smooth(Math.min(Math.max((y - APPROACH_START) / APPROACH_LEN, 0), 1));
+      if (window.__world && window.__world.setApproach) window.__world.setApproach(approach);
+      // ---- zoom-through reveal: the world/core swells to fill the frame
+      // (punching toward camera) while the next section eases in from a
+      // larger scale down to resting size, fading up at the same time — a
+      // smooth "pass through the core into the new section" rather than a
+      // hard cut or a plain cross-fade. Both scrubbed 1:1 off `approach`.
+      if (fwEl) fwEl.style.transform = "scale(" + (1 + approach * 0.45).toFixed(3) + ")";
+      if (nextSection) {
+        // hold the white wash fully transparent while the core is still
+        // visibly swelling, only bringing it in once the punch-through is
+        // almost there — so the zoom reads as pure scale first, with the
+        // white/next-section cut landing right at the very end instead of
+        // washing in gradually across the whole approach.
+        const WASH_START = 0.82;
+        const wash = Math.min(Math.max((approach - WASH_START) / (1 - WASH_START), 0), 1);
+        nextSection.style.opacity = wash.toFixed(3);
+        nextSection.style.transform = "scale(" + (1.35 - approach * 0.35).toFixed(3) + ")";
+        nextSection.style.visibility = wash > 0.001 ? "visible" : "hidden";
+        nextSection.classList.toggle("live", approach >= 1);
+
+        // ---- Craft in Motion (3D helix gallery) ----
+        // Masked headline lines rise the moment the wash lands (re-arm when
+        // scrolled back out). --dm (0->1 over ~5 viewports) drives that CSS
+        // slide-in and stays clamped, since an unclamped value would push
+        // the headline text off-screen.
+        //
+        // The Three.js helix's own motion (drag-in from bottom-left, then
+        // continuous twirl with a self-morphing curve — see dmHelix.js) is
+        // driven by GSAP tweens of window.__dmHelix's state proxy, retargeted
+        // here every scroll frame via window.__updateDmHelix. GSAP owns the
+        // actual easing/interpolation between targets.
+        //
+        // NOTE: this section already lives inside the page's single big
+        // .pin-keyfacts sticky pin, so the helix is scrubbed by GSAP rather
+        // than pinned by a second, independent ScrollTrigger — nesting one
+        // sticky pin inside another would fight this page's existing pin.
+        nextSection.classList.toggle("dm-in", wash > 0.5);
+        const DM_START = APPROACH_START + APPROACH_LEN + 0.5 * vh;
+        const dm = Math.min(Math.max((y - DM_START) / (5 * vh), 0), 1);
+        nextSection.style.setProperty("--dm", dm.toFixed(4));
+        // filmstrip: track position follows raw scroll distance past DM_START
+        // 1:1 (not clamped to the same 0-1 window as the headline), so the
+        // strip keeps panning left for as long as the section is in view —
+        // see the dedicated filmstrip script below for the actual driver.
+        window.__updateDmStrip?.(Math.max(y - DM_START, 0), wash > 0.001);
+      }
     }
   }
   const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
   addEventListener("scroll", onScroll, { passive: true });
   addEventListener("resize", onScroll);
   update();
+})();
+</script>
+
+<!-- ============ Craft in Motion — straight bottom filmstrip ============ -->
+<script>
+(function () {
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const track = document.getElementById("dmTrack");
+  if (!track) return;
+
+  const IMAGES = [
+    "assets/images/branding/Blackbox/Artboard 1.png",
+    "assets/images/branding/Carb N Care/Artboard 1.png",
+    "assets/images/branding/Cocogo/Artboard 1.png",
+    "assets/images/branding/Digital Mugavari/Artboard 1.png",
+    "assets/images/branding/Eco Cleanser/Artboard 1.png",
+    "assets/images/branding/Photonvolt/Artboard 1.png",
+    "assets/images/branding/Saki/Artboard 1.png",
+    "assets/images/branding/Tech Grandha/Artboard 1.png",
+    "assets/images/branding/Cocogo/Artboard 2.png",
+    "assets/images/branding/Saki/Artboard 2.png",
+  ];
+  // label is just the project's folder name — swap for real captions anytime
+  const labelFor = (src) => src.split("/").slice(-2, -1)[0];
+  // repeat the set a few times so the strip is wide enough to loop seamlessly
+  // at any viewport width without running out of tiles mid-scroll
+  const REPEATS = 4;
+  const all = [];
+  for (let r = 0; r < REPEATS; r++) all.push(...IMAGES);
+  all.forEach((src) => {
+    const tile = document.createElement("div");
+    tile.className = "dm-tile";
+    tile.style.backgroundImage = `url("${encodeURI(src)}")`;
+    const label = document.createElement("span");
+    label.className = "dm-tile-label";
+    label.textContent = labelFor(src);
+    tile.appendChild(label);
+    track.appendChild(tile);
+  });
+
+  // one full pass through IMAGES (not all REPEATS) worth of track width —
+  // used to wrap the scroll-driven translateX so it loops invisibly.
+  let loopWidth = 0;
+  function measure() {
+    const tiles = track.children;
+    loopWidth = 0;
+    for (let i = 0; i < IMAGES.length; i++) loopWidth += tiles[i].offsetWidth;
+  }
+  new ResizeObserver(measure).observe(track);
+  measure();
+
+  const SPEED = 0.55; // world px of track pan per px of page scroll
+  let rawDist = 0;      // last raw scroll distance reported by the page's scroll handler
+  let active = false;
+
+  // ---- velocity-driven skew ("wind" tilt) ----
+  // Lenis exposes .velocity (px/frame) on its instance; sampled every
+  // rendered frame (not just on scroll events, since it must EASE BACK to 0
+  // even once scrolling stops) and eased toward a target skew angle so the
+  // whole strip leans over smoothly under fast scroll and relaxes back
+  // flat at rest.
+  let skew = 0;
+  const MAX_SKEW = 14;       // degrees, clamped so it never reads as a glitch
+  const VELOCITY_TO_SKEW = 0.55;
+  const SKEW_EASE = 0.16;    // per-frame lerp toward target — quick build, gentle release
+
+  let rafId = 0;
+  function frame() {
+    rafId = requestAnimationFrame(frame);
+    const x = -(rawDist * SPEED % loopWidth || 0);
+    track.style.setProperty("--dm-x", x.toFixed(1) + "px");
+
+    const lenis = window.__lenis;
+    const v = lenis ? lenis.velocity : 0;
+    const targetSkew = Math.max(-MAX_SKEW, Math.min(MAX_SKEW, -v * VELOCITY_TO_SKEW));
+    skew += (targetSkew - skew) * SKEW_EASE;
+    track.style.setProperty("--dm-skew", skew.toFixed(3) + "deg");
+  }
+
+  window.__updateDmStrip = (dist, isActive) => {
+    rawDist = dist;
+    if (isActive !== active) {
+      active = isActive;
+      if (active && !rafId) frame();
+      else if (!active && rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+    }
+  };
+
+  if (reduced) {
+    // static frame, no scroll-driven pan or skew
+    track.style.setProperty("--dm-x", "0px");
+    track.style.setProperty("--dm-skew", "0deg");
+  } else {
+    // if the scroll script already ran once before this script tag ran,
+    // nudge it so the strip picks up the current progress immediately
+    dispatchEvent(new Event("scroll"));
+  }
 })();
 </script>
 
@@ -1818,6 +2484,103 @@ mountWorld(document.getElementById("focusWorld"));
     for (const en of entries) if (en.isIntersecting) { arm(en.target); io.unobserve(en.target); }
   }, { threshold: 0.3, rootMargin: "0px 0px -8% 0px" });
   targets.forEach((el) => io.observe(el));
+})();
+</script>
+
+<!-- Selected Work: horizontal card track scrubbed by vertical scroll (trionn-style) -->
+<script>
+(function () {
+  const section = document.getElementById("work");
+  const stage   = document.getElementById("workStage");
+  const track   = document.getElementById("workTrack");
+  if (!section || !stage || !track) return;
+
+  const cards = Array.from(track.querySelectorAll(".work-card"));
+  const vids  = cards.map((c) => c.querySelector("video[data-src]"));
+  const mobile = () => matchMedia("(max-width: 860px)").matches;
+
+  // On mobile the stage is a static vertical stack — just play visible videos.
+  if (mobile()) {
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver((ents) => ents.forEach((e) => {
+        const v = e.target;
+        if (e.isIntersecting) { if (!v.src) v.src = v.dataset.src; v.play().catch(()=>{}); }
+        else v.pause();
+      }), { threshold: 0.4 });
+      vids.forEach((v) => v && io.observe(v));
+    } else vids.forEach((v) => { if (v){ v.src = v.dataset.src; v.play().catch(()=>{}); } });
+    return;
+  }
+
+  const left = stage.querySelector(".work-left");
+  const N = cards.length;
+  let sectionTop = 0;     // page offset where the pin begins
+  let scrubLen = 0;       // scroll distance over which the whole stack plays
+  const PER = 1;          // logical scroll-units allotted per card transition
+  let active = -1;
+
+  function layout() {
+    // card 0 starts already parked in the right slot, so there are N-1
+    // conveyor steps; each ~= 0.9 viewport heights of scroll.
+    scrubLen = (N - 1) * window.innerHeight * 0.9;
+    section.style.height = (window.innerHeight + scrubLen) + "px";
+    sectionTop = section.offsetTop;
+  }
+
+  function onScroll() {
+    const y = window.scrollY - sectionTop;
+    let p = y / scrubLen;                       // 0..1 through the whole section
+    p = Math.min(1, Math.max(0, p));
+    // conveyor time: card i is parked in the RIGHT slot at t == i+1.
+    // Starts at t=1 so card 0 is already sitting there beside the heading.
+    const t = p * (N - 1) + 1;
+
+    const vw = window.innerWidth;
+    const slotR = vw * 0.22;                    // right slot (beside the heading)
+    const pitch = vw * 0.48;                    // fixed centre-to-centre spacing
+                                                // (> card width, so no overlap ever)
+
+    // conveyor offset: how far the whole train has advanced left
+    const adv = (t - 1) * pitch;
+
+    // heading rides the same conveyor, so it exits in lockstep with the cards
+    left.style.transform = "translateX(" + (-adv) + "px)";
+    left.style.opacity = String(Math.max(0, 1 - (t - 1)));
+
+    // RIGID TRAIN: card i's x is fixed at slotR + i*pitch minus the shared
+    // advance — equal gaps always. The vertical entry: while a card is still
+    // right of the resting slot it also sits lower, rising as it approaches.
+    cards.forEach((card, i) => {
+      const foot = card.querySelector(".wc-foot");
+      const x = slotR + i * pitch - adv;
+      // 0 when at/left of the slot, 1 when a full pitch to the right of it
+      const enter = Math.min(1, Math.max(0, (x - slotR) / pitch));
+      const ty = enter * 85;                     // comes up from below on approach
+      const op = Math.min(1, Math.max(0, 1.25 - enter)); // fades in as it climbs
+      card.style.transform =
+        "translate(calc(-50% + " + x + "px), calc(-50% + " + ty + "%))";
+      card.style.opacity = op;
+      if (foot) foot.style.opacity = op;
+    });
+
+    // the card in (or nearest) the right slot is the current one — it plays
+    let top = Math.min(N - 1, Math.max(0, Math.round(t - 1)));
+    if (top !== active) {
+      active = top;
+      vids.forEach((v, i) => {
+        if (!v) return;
+        if (i === active) { if (!v.src) v.src = v.dataset.src; v.play().catch(()=>{}); }
+        else v.pause();
+      });
+    }
+  }
+
+  let raf = 0;
+  function tick() { raf = 0; onScroll(); }
+  addEventListener("scroll", () => { if (!raf) raf = requestAnimationFrame(tick); }, { passive: true });
+  addEventListener("resize", () => { if (mobile()) { location.reload(); return; } layout(); onScroll(); });
+
+  layout(); onScroll();
 })();
 </script>
 </body>

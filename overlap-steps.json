@@ -1,0 +1,74 @@
+[
+  {
+    "scrollY": 23127,
+    "nextSection": {
+      "top": 0,
+      "bottom": 876,
+      "left": 0,
+      "right": 1440,
+      "opacity": "1",
+      "visibility": "visible",
+      "zIndex": "5",
+      "position": "absolute",
+      "display": "block"
+    },
+    "work": {
+      "top": 717,
+      "bottom": 1617,
+      "left": 0,
+      "right": 1440,
+      "opacity": "1",
+      "visibility": "visible",
+      "zIndex": "10",
+      "position": "relative",
+      "display": "block"
+    },
+    "pinKeyfacts": {
+      "top": -19959,
+      "bottom": 1617,
+      "left": 0,
+      "right": 1440,
+      "opacity": "1",
+      "visibility": "visible",
+      "zIndex": "auto",
+      "position": "relative",
+      "display": "block"
+    }
+  },
+  {
+    "scrollY": 23924,
+    "nextSection": {
+      "top": -56,
+      "bottom": 820,
+      "left": 0,
+      "right": 1440,
+      "opacity": "1",
+      "visibility": "visible",
+      "zIndex": "5",
+      "position": "absolute",
+      "display": "block"
+    },
+    "work": {
+      "top": -80,
+      "bottom": 820,
+      "left": 0,
+      "right": 1440,
+      "opacity": "1",
+      "visibility": "visible",
+      "zIndex": "10",
+      "position": "relative",
+      "display": "block"
+    },
+    "pinKeyfacts": {
+      "top": -20756,
+      "bottom": 820,
+      "left": 0,
+      "right": 1440,
+      "opacity": "1",
+      "visibility": "visible",
+      "zIndex": "auto",
+      "position": "relative",
+      "display": "block"
+    }
+  }
+]

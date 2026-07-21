@@ -79,13 +79,14 @@ export function mountWorld(container) {
   crossLight.layers.set(1);
 
   const energyCore = createEnergyCore(scene, renderer);
+  const cameraRig = createCameraRig(camera);
   const parts = [
     createSky(scene),
     createAurora(scene),
     createMountains(scene),
     createGround(scene),
     createGroundFog(scene),
-    createCameraRig(camera),
+    cameraRig,
     energyCore,
   ];
 
@@ -142,6 +143,15 @@ export function mountWorld(container) {
     // scroll progress 0..1 for the energy core's arrival — driven by the
     // page owning the pin (the-world.html demo track, or index.html section)
     setScroll(p) { energyCore.setProgress(p); },
+    // the core's actual smoothed progress (lags the raw setScroll target by
+    // its internal lerp) — pages driving other DOM elements off this same
+    // scrub (card climbs, etc.) should read THIS so they stay in lockstep
+    // with what's visually happening in the scene, not the raw input.
+    getScroll() { return energyCore.getProgress ? energyCore.getProgress() : 0; },
+    // scroll progress 0..1 for the camera's push toward the settled core,
+    // driven separately from the core's own arrival (setScroll) so the page
+    // can start the approach only once the sigil burn + cards have finished
+    setApproach(p) { cameraRig.setApproach(p); },
     dispose() {
       disposed = true;
       observer.disconnect();
