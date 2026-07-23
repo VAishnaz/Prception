@@ -7,6 +7,7 @@ import { createGroundFog } from "./groundFog.js";
 import { createCameraRig } from "./cameraRig.js";
 import { createEnergyCore } from "./energyCore.js";
 import { createPostProcessing } from "./postProcessing.js";
+import { createFluidDistortion } from "./fluidDistortion.js";
 
 // Phase 1 — The World. One call mounts the whole living environment into any
 // container element (a fullscreen div, or a pinned section of index.html):
@@ -97,6 +98,7 @@ export function mountWorld(container) {
 
   const composer = createPostProcessing(
     renderer, scene, camera, container.clientWidth, container.clientHeight);
+  const fluid = createFluidDistortion(renderer, container);
 
   const resize = () => {
     const w = container.clientWidth, h = container.clientHeight;
@@ -133,6 +135,8 @@ export function mountWorld(container) {
     if (!onScreen || container.dataset.paused === "1") return;
     const t = clock.getElapsedTime();
     for (const p of parts) p.update && p.update(t);
+    fluid.update();
+    composer.fluidPass.uniforms.tFluid.value = fluid.getTexture();
     composer.render();
   })();
 
@@ -157,6 +161,7 @@ export function mountWorld(container) {
       observer.disconnect();
       io.disconnect();
       for (const p of parts) p.dispose && p.dispose();
+      fluid.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     },
